@@ -16,7 +16,7 @@ func SetupRouter(r *gin.Engine) {
 		printers := api.Group("/printers")
 		{
 			printers.GET("/getPrinters", controllers.GetPrinters)
-			printers.PUT("/setInUse", controllers.SetPrinterInUse)
+			printers.PUT("/reservePrinter", controllers.ReservePrinter)
 		}
     }
 }

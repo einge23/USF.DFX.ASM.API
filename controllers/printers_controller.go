@@ -21,14 +21,14 @@ func GetPrinters(c *gin.Context) {
 
 
 
-func SetPrinterInUse(c *gin.Context) {
-    var req services.SetInUseRequest
+func ReservePrinter(c *gin.Context) {
+    var req services.ReservePrinterRequest
     if err := c.BindJSON(&req); err != nil {
         c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request format"})
         return
     }
 
-    success, err := services.SetPrinterInUse(req.PrinterId)
+    success, err := services.ReservePrinter(req.PrinterId, req.UserId, req.TimeMins)
     if err != nil {
         c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
         return

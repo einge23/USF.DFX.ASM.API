@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"gin-api/database"
 	"gin-api/models"
+	"time"
 )
 
 func GetPrinters() ([]models.Printer, error) {
@@ -28,15 +29,40 @@ func GetPrinters() ([]models.Printer, error) {
 	return printers, nil
 }
 
-type SetInUseRequest struct {
+type ReservePrinterRequest struct {
     PrinterId int `json:"printer_id"`
+	UserId int `json:"user_id"`
+	TimeMins int `json:"time_mins"`
 }
 
-func SetPrinterInUse(printerId int) (bool, error) {
-    result, err := database.DB.Exec("UPDATE printers SET in_use = TRUE WHERE id = ?", printerId)
-    if err != nil {
-        return false, fmt.Errorf("failed to update printer: %v", err)
-    }
+func ReservePrinter(printerId int, userId int, timeMins int) (bool, error) {
+	var user models.UserData
+	if err := database.DB.QueryRow("SELECT username FROM users WHERE id = ?", userId).Scan(
+		&user.Username); err != nil {
+		return false, fmt.Errorf("failed to get username: %v", err)
+	}
+
+	var printer models.Printer
+	if err := database.DB.QueryRow("SELECT id, name, color, rack, in_use FROM printers WHERE id = ?", printerId).Scan(
+		&printer.Id,
+		&printer.Name,
+		&printer.Color,
+		&printer.Rack,
+		&printer.In_Use); err != nil {
+		return false, fmt.Errorf("failed to get printer: %v", err)
+	}
+
+	if printer.In_Use {
+		return false, fmt.Errorf("printer is already in use")
+	}
+ 	result, err := database.DB.Exec(
+		"UPDATE printers SET in_use = TRUE, last_reserved_by = ? WHERE id = ?",
+		user.Username,
+		printerId,
+	)
+	if err != nil {
+		return false, fmt.Errorf("failed to update printer: %v", err)
+	}
 
     rowsAffected, err := result.RowsAffected()
     if err != nil {
@@ -46,6 +72,17 @@ func SetPrinterInUse(printerId int) (bool, error) {
     if rowsAffected == 0 {
         return false, fmt.Errorf("no printer found with id: %d", printerId)
     }
+
+	go func() {
+		time.Sleep(time.Duration(timeMins) * time.Minute)
+		_, err := database.DB.Exec(
+            "UPDATE printers SET in_use = FALSE WHERE id = ?",
+            printerId,
+        )
+		if err != nil {
+			fmt.Printf("failed to release printer: %v", err)
+		}
+	}()
 
     return true, nil
 }
