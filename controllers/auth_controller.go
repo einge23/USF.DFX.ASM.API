@@ -20,7 +20,14 @@ func Login(c *gin.Context) {
     userData, err := services.Login(request)
     if err != nil {
         log.Printf("Error in Login Service: %v", err)
-        c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+        switch err {
+            case services.ErrorUserNotFound:
+                c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+            case services.ErrorNotTrained:
+                c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
+            default:
+                c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+        }
         return
     }
 
