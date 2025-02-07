@@ -2,6 +2,7 @@ package services
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"gin-api/database"
 	"gin-api/models"
@@ -11,6 +12,11 @@ import (
 type LoginRequest struct {
 	Scanner_Message string `json:"scanner_message"`
 }
+
+var (
+	ErrorUserNotFound = errors.New("user not found")
+	ErrorNotTrained   = errors.New("user not trained")
+)
 
 func Login(loginRequest LoginRequest) (*models.UserData, error) {
 	cardData, err := util.ParseScannerString(loginRequest.Scanner_Message)
@@ -27,10 +33,14 @@ func Login(loginRequest LoginRequest) (*models.UserData, error) {
 	)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, fmt.Errorf("user not found")
+            return nil, ErrorUserNotFound
 		}
 		return nil, fmt.Errorf("database error: %v", err)
 	}
+
+	if !userData.Trained {
+        return nil, ErrorNotTrained
+    }
 	
 	return &userData, nil
 }
