@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"gin-api/database"
 	"gin-api/models"
+	"log"
 	"time"
 )
 
@@ -34,6 +35,12 @@ type ReservePrinterRequest struct {
 	UserId int `json:"user_id"`
 	TimeMins int `json:"time_mins"`
 }
+
+var (
+	manager = &models.ReservationManager{
+		Reservations: make(map[int]*models.Reservation),
+	}
+)
 
 func ReservePrinter(printerId int, userId int, timeMins int) (bool, error) {
 	var user models.UserData
@@ -73,16 +80,65 @@ func ReservePrinter(printerId int, userId int, timeMins int) (bool, error) {
         return false, fmt.Errorf("no printer found with id: %d", printerId)
     }
 
+	time_reserved := time.Now()
+	time_complete := time.Now().Add(time.Duration(timeMins) * time.Minute)
+
+	result, err = database.DB.Exec(
+		"INSERT INTO reservations (printerid, userid, time_reserved, time_complete, is_active) values (?, ?, ?, ?, ?)",
+		printerId,
+		userId,
+		time_reserved,
+		time_complete,
+		true,
+	)
+	if err != nil {
+		return false, fmt.Errorf("failed to insert reservation: %v", err)
+	}
+
+	reservationId, err := result.LastInsertId()
+	if err != nil {
+        return false, fmt.Errorf("failed to get reservation id: %v", err)
+    }
+
+    timer := time.NewTimer(time.Duration(timeMins) * time.Minute)
+	manager.Mutex.Lock()
+	manager.Reservations[int(reservationId)] = &models.Reservation{
+		Id:           int(reservationId),
+		PrinterId:    printerId,
+		UserId:       userId,
+		TimeReserved: time_reserved,
+		TimeComplete: time_complete,
+		IsActive:     true,
+		Timer:       timer,
+	}
+	manager.Mutex.Unlock()
+
 	go func() {
-		time.Sleep(time.Duration(timeMins) * time.Minute)
-		_, err := database.DB.Exec(
-            "UPDATE printers SET in_use = FALSE WHERE id = ?",
-            printerId,
-        )
-		if err != nil {
-			fmt.Printf("failed to release printer: %v", err)
-		}
+		<-timer.C
+		completeReservation(printerId, int(reservationId))
 	}()
 
-    return true, nil
+return true, nil
+}
+
+func completeReservation(printerId, reservationId int) {
+	_, err := database.DB.Exec(
+        "UPDATE printers SET in_use = FALSE WHERE id = ?",
+        printerId,
+    )
+    if err != nil {
+        log.Printf("failed to update printer: %v", err)
+    }
+
+	_, err = database.DB.Exec(
+        "UPDATE reservations SET is_active = FALSE WHERE id = ?",
+        reservationId,
+    )
+    if err != nil {
+        log.Printf("failed to update reservation: %v", err)
+    }
+
+	manager.Mutex.Lock()
+    delete(manager.Reservations, reservationId)
+    manager.Mutex.Unlock()
 }
