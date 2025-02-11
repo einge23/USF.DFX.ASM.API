@@ -36,7 +36,7 @@ func CreateUser(createUserRequest CreateUserRequest) (bool, error) {
 	}
 
 	//add user
-	insertSQL := `INSERT INTO users (id, username, istrained, isadmin) VALUES (?, ?, ?, ?)`
+	insertSQL := `INSERT INTO users (id, username, has_training, admin) VALUES (?, ?, ?, ?)`
 	_, err = database.DB.Exec(insertSQL, cardData.Id, cardData.Username, createUserRequest.Trained, createUserRequest.Admin)
 	if err != nil {
 		return true, fmt.Errorf("could not add user: %v", err)

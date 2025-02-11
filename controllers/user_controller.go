@@ -10,18 +10,18 @@ import (
 func CreateUser(c *gin.Context) {
 	var req services.CreateUserRequest
 	if err := c.BindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request format"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	success, err := services.CreateUser(req)
+	failed, err := services.CreateUser(req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"Internal server error": err.Error()})
 		return
 	}
 
-	if !success {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Could not create user"})
+	if failed {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Status not found"})
 		return
 	}
 
