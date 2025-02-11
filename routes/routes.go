@@ -18,5 +18,9 @@ func SetupRouter(r *gin.Engine) {
 			printers.GET("/getPrinters", controllers.GetPrinters)
 			printers.PUT("/reservePrinter", controllers.ReservePrinter)
 		}
+		reservations := api.Group("/reservations")
+		{
+			reservations.GET("/getActiveReservations", controllers.GetActiveReservations)
+		}
     }
 }
