@@ -23,6 +23,10 @@ func SetupRouter(r *gin.Engine) {
 			users := admin.Group("/users")
 			{
 				users.POST("/create", controllers.CreateUser)
+				userId := users.Group(("/:userID"))
+				{
+					userId.PUT("/setTrained", controllers.SetUserTrained)
+				}
 			}
 		}
 	}
