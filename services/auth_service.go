@@ -18,10 +18,11 @@ var (
 	ErrorNotTrained   = errors.New("user not trained")
 )
 
-func Login(loginRequest LoginRequest) (*models.UserData, error) {
+func Login(loginRequest LoginRequest) (*models.UserData, *util.TokenPair, error) {
 	cardData, err := util.ParseScannerString(loginRequest.Scanner_Message)
+	tokenPair := &util.TokenPair{}
 	if err != nil {
-        return nil, fmt.Errorf("error parsing card data: %v", err)
+        return nil, tokenPair, fmt.Errorf("error parsing card data: %v", err)
     }
 
 	var userData models.UserData
@@ -33,15 +34,20 @@ func Login(loginRequest LoginRequest) (*models.UserData, error) {
 	)
 	if err != nil {
 		if err == sql.ErrNoRows {
-            return nil, ErrorUserNotFound
+            return nil, tokenPair, ErrorUserNotFound
 		}
-		return nil, fmt.Errorf("database error: %v", err)
+		return nil, tokenPair, fmt.Errorf("database error: %v", err)
 	}
 
 	if !userData.Trained {
-        return nil, ErrorNotTrained
+        return nil, tokenPair, ErrorNotTrained
+    }
+
+	token, err := util.GenerateTokenPair(userData.Id, userData.Admin)
+	if err != nil {
+        return nil, tokenPair , fmt.Errorf("error generating token: %v", err)
     }
 	
-	return &userData, nil
+	return &userData, token, nil
 }
 
