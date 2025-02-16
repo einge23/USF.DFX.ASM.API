@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"gin-api/services"
+	"gin-api/util"
 	"log"
 	"net/http"
 
@@ -17,7 +18,7 @@ func Login(c *gin.Context) {
         return
     }
 
-    userData, err := services.Login(request)
+    userData, tokenPair, err := services.Login(request)
     if err != nil {
         log.Printf("Error in Login Service: %v", err)
         switch err {
@@ -30,6 +31,36 @@ func Login(c *gin.Context) {
         }
         return
     }
+    
+    c.SetCookie("refresh_token", tokenPair.RefreshToken, 60*60*24*7, "/", "", false, true)
 
-    c.JSON(http.StatusOK, userData)
+    c.JSON(http.StatusOK, gin.H{
+        "user": userData,
+        "access_token": tokenPair.AccessToken,
+    })
+}
+
+func RefreshToken(c *gin.Context) {
+    refreshToken := c.GetHeader("Refresh-Token")
+    if refreshToken == "" {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "refresh token required"})
+        return
+    }
+
+    newAccessToken, err := util.RefreshAccessToken(refreshToken)
+    if err != nil {
+        switch err {
+        case util.ErrExpiredToken:
+            c.JSON(http.StatusUnauthorized, gin.H{"error": "refresh token expired"})
+        case util.ErrInvalidToken:
+            c.JSON(http.StatusBadRequest, gin.H{"error": "invalid refresh token"})
+        default:
+            c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to refresh token"})
+        }
+        return
+    }
+
+    c.JSON(http.StatusOK, gin.H{
+        "access_token": newAccessToken,
+    })
 }

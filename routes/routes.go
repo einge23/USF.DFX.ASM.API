@@ -2,6 +2,7 @@ package routes
 
 import (
 	"gin-api/controllers"
+	"gin-api/middleware"
 
 	"github.com/gin-gonic/gin"
 )
@@ -12,22 +13,30 @@ func SetupRouter(r *gin.Engine) {
 		auth := api.Group("/auth")
 		{
 			auth.POST("/login", controllers.Login)
+			auth.POST("/refreshToken", controllers.RefreshToken)
 		}
-		printers := api.Group("/printers")
-		{
-			printers.GET("/getPrinters", controllers.GetPrinters)
-			printers.PUT("/reservePrinter", controllers.ReservePrinter)
-		}
-		admin := api.Group(("/admin"))
-		{
-			users := admin.Group("/users")
-			{
-				users.POST("/create", controllers.CreateUser)
-				userId := users.Group(("/:userID"))
-				{
-					userId.PUT("/setTrained", controllers.SetUserTrained)
-				}
-			}
-		}
+		protected := api.Group("")
+        protected.Use(middleware.AuthMiddleware())
+        {
+            printers := protected.Group("/printers")
+            {
+                printers.GET("/getPrinters", controllers.GetPrinters)
+                printers.PUT("/reservePrinter", controllers.ReservePrinter)
+            }
+
+            // Admin routes
+            admin := protected.Group("/admin")
+            admin.Use(middleware.AdminPermission())
+            {
+                users := admin.Group("/users")
+                {
+                    users.POST("/create", controllers.CreateUser)
+                    userId := users.Group("/:userID")
+                    {
+                        userId.PUT("/setTrained", controllers.SetUserTrained)
+                    }
+                }
+            }
+        }
 	}
 }
