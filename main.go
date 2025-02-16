@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"gin-api/database"
 	"gin-api/routes"
+	"gin-api/util"
 	"log"
 
 	"github.com/gin-contrib/cors"
@@ -26,17 +27,25 @@ func main() {
 
 	// CORS middleware setup before routes
 	config := cors.DefaultConfig()
-	config.AllowOrigins = []string{"http://localhost:5173"}
-	config.AllowMethods = []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}
-	config.AllowHeaders = []string{"Origin", "Content-Type", "Accept", "Authorization"}
-	config.ExposeHeaders = []string{"Content-Length"}
-	config.AllowCredentials = true
+    config.AllowOrigins = []string{
+        "http://localhost:5173", 
+    }
+    config.AllowHeaders = []string{
+        "Origin",
+        "Content-Type",
+        "Accept",
+        "Authorization",
+    }
+    config.ExposeHeaders = []string{"Content-Length"}
+    config.AllowCredentials = true
 
-	r.Use(cors.New(config))
+    r.Use(cors.New(config))
 	r.Use(gin.Logger())
 	r.Use(gin.Recovery())
+	r.Use(util.GetRateLimiter())
 
 	routes.SetupRouter(r)
+
 
 	r.Run(":3000")
 }
