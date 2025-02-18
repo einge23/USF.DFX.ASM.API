@@ -3,6 +3,7 @@ package middleware
 import (
 	"gin-api/util"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -47,6 +48,31 @@ func AdminPermission() gin.HandlerFunc {
             c.Abort()
             return
         }
+        c.Next()
+    }
+}
+
+func UserOwnershipPermission() gin.HandlerFunc {
+    return func(c *gin.Context) {
+        // Get the requesting user's ID from the JWT token
+        requestingUserID := c.GetInt("userId")
+        // Get the target user ID from URL parameter
+        targetUserID, err := strconv.Atoi(c.Param("userID"))
+        
+        if err != nil {
+            c.JSON(400, gin.H{"error": "Invalid user ID"})
+            c.Abort()
+            return
+        }
+
+        // Allow if user is admin or requesting their own data
+        isAdmin := c.GetBool("isAdmin")
+        if !isAdmin && requestingUserID != targetUserID {
+            c.JSON(403, gin.H{"error": "Unauthorized access"})
+            c.Abort()
+            return
+        }
+        
         c.Next()
     }
 }

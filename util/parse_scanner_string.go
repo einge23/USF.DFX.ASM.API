@@ -12,7 +12,10 @@ type ParsedCardData struct {
 }
 
 func ParseScannerString(scannerString string) (*ParsedCardData, error) {
-    // Remove any whitespace
+    if (scannerString == "" || len(scannerString) >= 256) {
+        return nil, fmt.Errorf("invalid scanner string format")
+    }
+
     scannerString = strings.TrimSpace(scannerString)
     
     // Split by '^' to get the different fields

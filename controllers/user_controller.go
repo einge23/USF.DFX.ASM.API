@@ -53,3 +53,42 @@ func SetUserTrained(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"message": "User training status successfully updated"})
 }
+
+func GetUserReservations(c *gin.Context) {
+	userId := c.Param("userID")
+	id, err := strconv.Atoi(userId)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+		return
+	}
+
+	reservations, err := services.GetUserReservations(id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, reservations)
+}
+
+func GetActiveUserReservations(c *gin.Context) {
+	userId := c.Param("userID")
+	id, err := strconv.Atoi(userId)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+		return
+	}
+
+	reservations, err := services.GetActiveUserReservations(id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	if len(reservations) == 0 {
+		c.JSON(http.StatusNoContent, gin.H{"message": "No active reservations found"})
+		return
+	}
+
+	c.JSON(http.StatusOK, reservations)
+}

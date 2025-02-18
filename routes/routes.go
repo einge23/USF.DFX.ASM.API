@@ -23,6 +23,17 @@ func SetupRouter(r *gin.Engine) {
                 printers.GET("/getPrinters", controllers.GetPrinters)
                 printers.PUT("/reservePrinter", controllers.ReservePrinter)
             }
+            users := protected.Group("/users")
+            {
+                users.GET("/reservations/:userID", 
+                    middleware.UserOwnershipPermission(), 
+                    controllers.GetUserReservations,
+                )
+                users.GET("/activeReservations/:userID", 
+                    middleware.UserOwnershipPermission(), 
+                    controllers.GetActiveUserReservations,
+                )
+            }
 
             // Admin routes
             admin := protected.Group("/admin")
