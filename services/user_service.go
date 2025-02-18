@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"gin-api/database"
+	"gin-api/models"
 	"gin-api/util"
 )
 
@@ -71,4 +72,44 @@ func SetUserTrained(setUserTrainedRequest SetUserTrainedRequest) (bool, error) {
 	}
 
 	return false, nil
+}
+
+func GetUserReservations(userId int) ([]models.ReservationDTO, error) {
+	var reservations []models.ReservationDTO
+	querySQL := `SELECT id, userId, time_reserved, time_complete, printerid, is_active FROM reservations WHERE userId = ?`
+	rows, err := database.DB.Query(querySQL, userId)
+	if err != nil {
+		return nil, fmt.Errorf("error getting reservations from db: %v", err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var reservation models.ReservationDTO
+		err := rows.Scan(&reservation.Id, &reservation.UserId, &reservation.TimeReserved, &reservation.TimeComplete, &reservation.PrinterId, &reservation.IsActive)
+		if err != nil {
+			return nil, fmt.Errorf("error scanning reservation: %v", err)
+		}
+		reservations = append(reservations, reservation)
+	}
+	return reservations, nil
+}
+
+func GetActiveUserReservations(userId int) ([]models.ReservationDTO, error) {
+	var reservations []models.ReservationDTO
+	querySQL := `SELECT id, userId, time_reserved, time_complete, printerid, is_active FROM reservations WHERE userId = ? AND is_active = 1`
+	rows, err := database.DB.Query(querySQL, userId)
+	if err != nil {
+		return nil, fmt.Errorf("error getting reservations from db: %v", err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var reservation models.ReservationDTO
+		err := rows.Scan(&reservation.Id, &reservation.UserId, &reservation.TimeReserved, &reservation.TimeComplete, &reservation.PrinterId, &reservation.IsActive)
+		if err != nil {
+			return nil, fmt.Errorf("error scanning reservation: %v", err)
+		}
+		reservations = append(reservations, reservation)
+	}
+	return reservations, nil
 }
