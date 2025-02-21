@@ -76,7 +76,7 @@ func SetUserTrained(setUserTrainedRequest SetUserTrainedRequest) (bool, error) {
 
 func GetUserReservations(userId int) ([]models.ReservationDTO, error) {
 	var reservations []models.ReservationDTO
-	querySQL := `SELECT id, userId, time_reserved, time_complete, printerid, is_active FROM reservations WHERE userId = ?`
+	querySQL := `SELECT id, userId, time_reserved, time_complete, printerid, is_active FROM reservations WHERE userId = ? ORDER BY time_reserved DESC`
 	rows, err := database.DB.Query(querySQL, userId)
 	if err != nil {
 		return nil, fmt.Errorf("error getting reservations from db: %v", err)
@@ -96,7 +96,7 @@ func GetUserReservations(userId int) ([]models.ReservationDTO, error) {
 
 func GetActiveUserReservations(userId int) ([]models.ReservationDTO, error) {
 	var reservations []models.ReservationDTO
-	querySQL := `SELECT id, userId, time_reserved, time_complete, printerid, is_active FROM reservations WHERE userId = ? AND is_active = 1`
+	querySQL := `SELECT id, userId, time_reserved, time_complete, printerid, is_active FROM reservations WHERE userId = ? AND is_active = 1 ORDER BY time_reserved DESC`
 	rows, err := database.DB.Query(querySQL, userId)
 	if err != nil {
 		return nil, fmt.Errorf("error getting reservations from db: %v", err)
