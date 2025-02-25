@@ -40,7 +40,7 @@ func SetUserTrained(c *gin.Context) {
 	}
 
 	//create request with id used in the specified path
-	req := services.SetUserTrainedRequest{UserToTrain: id}
+	req := services.SetUserTrainedRequest{UserId: id}
 	failed, err := services.SetUserTrained(req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"internal server error": err.Error()})
@@ -95,27 +95,56 @@ func GetActiveUserReservations(c *gin.Context) {
 }
 
 type GetUserRequest struct {
-    ScannerMessage string `json:"scanner_message" binding:"required"`
+	ScannerMessage string `json:"scanner_message" binding:"required"`
 }
 
 func GetUserById(c *gin.Context) {
-    var req GetUserRequest
-    if err := c.ShouldBindJSON(&req); err != nil {
-        c.JSON(http.StatusBadRequest, gin.H{"error": "Scanner message is required"})
-        return
-    }
+	var req GetUserRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Scanner message is required"})
+		return
+	}
 
-    parsedData, err := util.ParseScannerString(req.ScannerMessage)
-    if err != nil {
-        c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid scanner message"})
-        return
-    }
-    
-    userData, err := services.GetUserById(parsedData.Id)
-    if err != nil {
-        c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-        return
-    }
+	parsedData, err := util.ParseScannerString(req.ScannerMessage)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid scanner message"})
+		return
+	}
 
-    c.JSON(http.StatusOK, userData)
+	userData, err := services.GetUserById(parsedData.Id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, userData)
+}
+
+func SetUserExecutiveAccess(c *gin.Context) {
+	//get userID from path
+	userID := c.Param("userID")
+	id, err := strconv.Atoi(userID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+		return
+	}
+
+	req := services.SetUserExecutiveAccessRequest{UserId: id}
+	if err := c.BindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request format"})
+		return
+	}
+
+	failed, err := services.SetUserExecutiveAccess(req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"Internal server error:": err.Error()})
+		return
+	}
+
+	if failed {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Status not found"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "user executive status successfully changed"})
 }

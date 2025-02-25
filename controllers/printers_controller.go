@@ -58,5 +58,5 @@ func SetPrinterExecutive(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "printer executive status sucessfully changed"})
+	c.JSON(http.StatusOK, gin.H{"message": "printer executive status successfully changed"})
 }

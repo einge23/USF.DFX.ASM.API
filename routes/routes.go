@@ -43,10 +43,8 @@ func SetupRouter(r *gin.Engine) {
                 {
                     users.POST("/create", controllers.CreateUser)
                     users.POST("/getUser", controllers.GetUserById)
-                    setTrained := users.Group("/setTrained")
-                    {
-                        setTrained.PUT("/:userID", controllers.SetUserTrained)
-                    }
+                    users.PUT("/setTrained/:userID", controllers.SetUserTrained)
+                    users.PUT("/setExecutiveAccess/:userID", controllers.SetUserExecutiveAccess)
                 }
                 printers := admin.Group("/printers")
                 {

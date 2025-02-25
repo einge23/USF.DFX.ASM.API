@@ -150,13 +150,13 @@ type SetPrinterExecRequest struct {
 func SetPrinterExecutive(setPrinterExecRequest SetPrinterExecRequest) (bool, error) {
 
 	var currentExecutiveness bool
-	
+
 	querySQL := `SELECT is_executive FROM printers WHERE id = ?`
-	err := database.DB.QueryRow(querySQL, setPrinterExecRequest.PrinterId).Scan((&currentExecutiveness))
+	err := database.DB.QueryRow(querySQL, setPrinterExecRequest.PrinterId).Scan(&currentExecutiveness)
 	if err != nil {
 		return true, fmt.Errorf("error getting printer executiveness from db: %v", err)
 	}
-	
+
 	newExecutiveness := !currentExecutiveness
 
 	updateSQL := `UPDATE printers SET is_executive = ? WHERE id = ?`

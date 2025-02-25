@@ -45,18 +45,17 @@ func CreateUser(createUserRequest CreateUserRequest) (bool, error) {
 	return false, nil
 }
 
-
 type SetUserTrainedRequest struct {
-	UserToTrain int
+	UserId int `json:"user_id"`
 }
 
 func SetUserTrained(setUserTrainedRequest SetUserTrainedRequest) (bool, error) {
 
 	//get trained status for the user from db
 	var trainedStatus bool
-	fmt.Println(setUserTrainedRequest.UserToTrain)
+	fmt.Println(setUserTrainedRequest.UserId)
 	querySQL := `SELECT has_training FROM users WHERE id = ?`
-	err := database.DB.QueryRow(querySQL, setUserTrainedRequest.UserToTrain).Scan(&trainedStatus)
+	err := database.DB.QueryRow(querySQL, setUserTrainedRequest.UserId).Scan(&trainedStatus)
 	if err != nil {
 		return true, fmt.Errorf("error getting user from db: %v", err)
 	}
@@ -66,7 +65,7 @@ func SetUserTrained(setUserTrainedRequest SetUserTrainedRequest) (bool, error) {
 
 	//update the user's training status in the database
 	updateSQL := `UPDATE users SET has_training = ? WHERE id = ?`
-	_, err = database.DB.Exec(updateSQL, newTrainedStatus, setUserTrainedRequest.UserToTrain)
+	_, err = database.DB.Exec(updateSQL, newTrainedStatus, setUserTrainedRequest.UserId)
 	if err != nil {
 		return true, fmt.Errorf("error updating user training status: %v", err)
 	}
@@ -122,4 +121,29 @@ func GetUserById(userID int) (*models.UserData, error) {
 		return nil, fmt.Errorf("error getting user from db: %v", err)
 	}
 	return &user, nil
+}
+
+type SetUserExecutiveAccessRequest struct {
+	UserId int `json:"user_id"`
+}
+
+func SetUserExecutiveAccess(setUserExecutiveAccessRequest SetUserExecutiveAccessRequest) (bool, error) {
+
+	var currentExecutiveAccess bool
+
+	querySQL := `SELECT has_executive_access FROM users WHERE id = ?`
+	err := database.DB.QueryRow(querySQL, setUserExecutiveAccessRequest.UserId).Scan(&currentExecutiveAccess)
+	if err != nil {
+		return true, fmt.Errorf("error getting user executive access from db: %v", err)
+	}
+
+	newExecutiveAccess := !currentExecutiveAccess
+
+	updateSQL := `UPDATE users SET has_executive_access = ? WHERE id = ?`
+	_, err = database.DB.Exec(updateSQL, newExecutiveAccess, setUserExecutiveAccessRequest.UserId)
+	if err != nil {
+		return true, fmt.Errorf("error updating user executive access: %v", err)
+	}
+
+	return false, nil //return 0
 }
