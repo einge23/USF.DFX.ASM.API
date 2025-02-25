@@ -47,6 +47,10 @@ func SetupRouter(r *gin.Engine) {
                         userId.PUT("/setTrained", controllers.SetUserTrained)
                     }
                 }
+                printers := admin.Group("/printers")
+                {
+                    printers.PUT("/setExecutive", controllers.SetPrinterExecutive)
+                }
             }
         }
 	}
