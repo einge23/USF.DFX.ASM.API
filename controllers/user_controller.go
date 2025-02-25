@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"gin-api/services"
+	"gin-api/util"
 	"net/http"
 	"strconv"
 
@@ -91,4 +92,30 @@ func GetActiveUserReservations(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, reservations)
+}
+
+type GetUserRequest struct {
+    ScannerMessage string `json:"scanner_message" binding:"required"`
+}
+
+func GetUserById(c *gin.Context) {
+    var req GetUserRequest
+    if err := c.ShouldBindJSON(&req); err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "Scanner message is required"})
+        return
+    }
+
+    parsedData, err := util.ParseScannerString(req.ScannerMessage)
+    if err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid scanner message"})
+        return
+    }
+    
+    userData, err := services.GetUserById(parsedData.Id)
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+        return
+    }
+
+    c.JSON(http.StatusOK, userData)
 }

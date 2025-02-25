@@ -113,3 +113,13 @@ func GetActiveUserReservations(userId int) ([]models.ReservationDTO, error) {
 	}
 	return reservations, nil
 }
+
+func GetUserById(userID int) (*models.UserData, error) {
+	var user models.UserData
+	querySQL := `SELECT id, username, has_training, admin FROM users WHERE id = ?`
+	err := database.DB.QueryRow(querySQL, userID).Scan(&user.Id, &user.Username, &user.Trained, &user.Admin)
+	if err != nil {
+		return nil, fmt.Errorf("error getting user from db: %v", err)
+	}
+	return &user, nil
+}
