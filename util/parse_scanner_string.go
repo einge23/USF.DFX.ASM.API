@@ -24,16 +24,25 @@ func ParseScannerString(scannerString string) (*ParsedCardData, error) {
         return nil, fmt.Errorf("invalid scanner string format")
     }
     
-    // Extract card number (remove the '%B' prefix)
 	id := strings.TrimPrefix(parts[0], "%B")
 	idNum, err := strconv.Atoi(id) 
 	if err != nil {
     return nil, fmt.Errorf("failed to parse ID: %v", err)
 	}    
-    // Extract name and clean it up
     username := strings.TrimSpace(parts[1])
-    // Replace '/' with space in name
     username = strings.ReplaceAll(username, "/", " ")
+    
+    nameParts := strings.Fields(username)
+    if len(nameParts) >= 2 {
+
+        firstName := nameParts[1]
+        lastName := nameParts[0]    
+        middleNames := nameParts[2:]  
+        
+        allParts := append([]string{firstName}, middleNames...)
+        allParts = append(allParts, lastName)
+        username = strings.Join(allParts, " ")
+    }
     
     return &ParsedCardData{
         Id: idNum,

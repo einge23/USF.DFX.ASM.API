@@ -10,8 +10,8 @@ import (
 
 type CreateUserRequest struct {
 	Scanner_Message string `json:"scanner_message"`
-	Trained         bool
-	Admin           bool
+	Trained         bool `json:"trained"`
+	Admin           bool `json:"admin"`
 }
 
 func CreateUser(createUserRequest CreateUserRequest) (bool, error) {
