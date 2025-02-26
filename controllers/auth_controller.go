@@ -41,8 +41,8 @@ func Login(c *gin.Context) {
 }
 
 func RefreshToken(c *gin.Context) {
-    refreshToken := c.GetHeader("Refresh-Token")
-    if refreshToken == "" {
+    refreshToken, err := c.Cookie("refresh_token")
+    if err != nil || refreshToken == "" {
         c.JSON(http.StatusBadRequest, gin.H{"error": "refresh token required"})
         return
     }

@@ -39,6 +39,7 @@ func GenerateTokenPair(userId int, isAdmin bool) (*TokenPair, error) {
 	refreshToken := jwt.New(jwt.SigningMethodHS256)
     refreshClaims := refreshToken.Claims.(jwt.MapClaims)
     refreshClaims["userId"] = userId
+    refreshClaims["isAdmin"] = isAdmin
     refreshClaims["exp"] = time.Now().Add(7 * 24 * time.Hour).Unix()
     refreshClaims["type"] = "refresh"
 
