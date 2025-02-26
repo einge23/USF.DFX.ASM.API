@@ -10,15 +10,15 @@ import (
 
 type CreateUserRequest struct {
 	Scanner_Message string `json:"scanner_message"`
-	Trained         bool `json:"trained"`
-	Admin           bool `json:"admin"`
+	Trained         bool   `json:"trained"`
+	Admin           bool   `json:"admin"`
 }
 
 func CreateUser(createUserRequest CreateUserRequest) (bool, error) {
 
 	cardData, err := util.ParseScannerString(createUserRequest.Scanner_Message)
 	if err != nil {
-		return true, fmt.Errorf("error parsing card data: %v", err)
+		return false, fmt.Errorf("error parsing card data: %v", err)
 	}
 
 	//check for existing user
@@ -28,25 +28,21 @@ func CreateUser(createUserRequest CreateUserRequest) (bool, error) {
 
 	//problem querying
 	if err != nil && err != sql.ErrNoRows {
-		return true, fmt.Errorf("could not query user: %v", err)
+		return false, fmt.Errorf("could not query user: %v", err)
 	}
 
 	//user already exists
 	if existingID != 0 {
-		return true, fmt.Errorf("user with username '%s' already exists", cardData.Username)
+		return false, fmt.Errorf("user with username '%s' already exists", cardData.Username)
 	}
 
 	//add user
 	insertSQL := `INSERT INTO users (id, username, has_training, admin) VALUES (?, ?, ?, ?)`
 	_, err = database.DB.Exec(insertSQL, cardData.Id, cardData.Username, createUserRequest.Trained, createUserRequest.Admin)
 	if err != nil {
-		return true, fmt.Errorf("could not add user: %v", err)
+		return false, fmt.Errorf("could not add user: %v", err)
 	}
-	return false, nil
-}
-
-type SetUserTrainedRequest struct {
-	UserId int `json:"user_id"`
+	return true, nil
 }
 
 func SetUserTrained(userId int) (bool, error) {
@@ -56,7 +52,7 @@ func SetUserTrained(userId int) (bool, error) {
 	querySQL := `SELECT has_training FROM users WHERE id = ?`
 	err := database.DB.QueryRow(querySQL, userId).Scan(&trainedStatus)
 	if err != nil {
-		return true, fmt.Errorf("error getting user from db: %v", err)
+		return false, fmt.Errorf("error getting user from db: %v", err)
 	}
 
 	//toggle the trainedStatus
@@ -66,10 +62,10 @@ func SetUserTrained(userId int) (bool, error) {
 	updateSQL := `UPDATE users SET has_training = ? WHERE id = ?`
 	_, err = database.DB.Exec(updateSQL, newTrainedStatus, userId)
 	if err != nil {
-		return true, fmt.Errorf("error updating user training status: %v", err)
+		return false, fmt.Errorf("error updating user training status: %v", err)
 	}
 
-	return false, nil
+	return true, nil
 }
 
 func GetUserReservations(userId int) ([]models.ReservationDTO, error) {
@@ -129,7 +125,7 @@ func SetUserExecutiveAccess(userId int) (bool, error) {
 	querySQL := `SELECT has_executive_access FROM users WHERE id = ?`
 	err := database.DB.QueryRow(querySQL, userId).Scan(&currentExecutiveAccess)
 	if err != nil {
-		return true, fmt.Errorf("error getting user executive access from db: %v", err)
+		return false, fmt.Errorf("error getting user executive access from db: %v", err)
 	}
 
 	newExecutiveAccess := !currentExecutiveAccess
@@ -137,8 +133,8 @@ func SetUserExecutiveAccess(userId int) (bool, error) {
 	updateSQL := `UPDATE users SET has_executive_access = ? WHERE id = ?`
 	_, err = database.DB.Exec(updateSQL, newExecutiveAccess, userId)
 	if err != nil {
-		return true, fmt.Errorf("error updating user executive access: %v", err)
+		return false, fmt.Errorf("error updating user executive access: %v", err)
 	}
 
-	return false, nil //return 0
+	return true, nil //return 0
 }

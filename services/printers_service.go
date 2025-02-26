@@ -163,7 +163,7 @@ func SetPrinterExecutive(setPrinterExecRequest SetPrinterExecRequest) (bool, err
 	querySQL := `SELECT is_executive FROM printers WHERE id = ?`
 	err := database.DB.QueryRow(querySQL, setPrinterExecRequest.PrinterId).Scan(&currentExecutiveness)
 	if err != nil {
-		return true, fmt.Errorf("error getting printer executiveness from db: %v", err)
+		return false, fmt.Errorf("error getting printer executiveness from db: %v", err)
 	}
 
 	newExecutiveness := !currentExecutiveness
@@ -171,8 +171,8 @@ func SetPrinterExecutive(setPrinterExecRequest SetPrinterExecRequest) (bool, err
 	updateSQL := `UPDATE printers SET is_executive = ? WHERE id = ?`
 	_, err = database.DB.Exec(updateSQL, newExecutiveness, setPrinterExecRequest.PrinterId)
 	if err != nil {
-		return true, fmt.Errorf("error updating printer executiveness: %v", err)
+		return false, fmt.Errorf("error updating printer executiveness: %v", err)
 	}
 
-	return false, nil //return 0
+	return true, nil //return 0
 }
