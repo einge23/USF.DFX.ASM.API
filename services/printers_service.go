@@ -1,6 +1,7 @@
 package services
 
 import (
+	"database/sql"
 	"fmt"
 	"gin-api/database"
 	"gin-api/models"
@@ -9,25 +10,31 @@ import (
 )
 
 func GetPrinters() ([]models.Printer, error) {
-	rows, err := database.DB.Query("SELECT id, name, color, rack, in_use FROM printers")
-	if err != nil {
-		return nil, fmt.Errorf("query error: %v", err)
-	}
-	defer rows.Close()
+    rows, err := database.DB.Query("SELECT id, name, color, rack, in_use, last_reserved_by, is_executive FROM printers")
+    if err != nil {
+        return nil, fmt.Errorf("query error: %v", err)
+    }
+    defer rows.Close()
 
-	var printers []models.Printer
-	for rows.Next() {
-		var p models.Printer
-		if err := rows.Scan(&p.Id, &p.Name, &p.Color, &p.Rack, &p.In_Use); err != nil {
-			return nil, fmt.Errorf("scan error: %v", err)
-		}
-		printers = append(printers, p)
-	}
+    var printers []models.Printer
+    for rows.Next() {
+        var p models.Printer
+        var lastReservedBy sql.NullString
+        if err := rows.Scan(&p.Id, &p.Name, &p.Color, &p.Rack, &p.In_Use, &lastReservedBy, &p.Is_Executive); err != nil {
+            return nil, fmt.Errorf("scan error: %v", err)
+        }
+        if lastReservedBy.Valid {
+            p.Last_Reserved_By = lastReservedBy.String
+        } else {
+            p.Last_Reserved_By = ""
+        }
+        printers = append(printers, p)
+    }
 
-	if err = rows.Err(); err != nil {
-		return nil, fmt.Errorf("rows error: %v", err)
-	}
-	return printers, nil
+    if err = rows.Err(); err != nil {
+        return nil, fmt.Errorf("rows error: %v", err)
+    }
+    return printers, nil
 }
 
 type ReservePrinterRequest struct {
@@ -50,12 +57,14 @@ func ReservePrinter(printerId int, userId int, timeMins int) (bool, error) {
 	}
 
 	var printer models.Printer
-	if err := database.DB.QueryRow("SELECT id, name, color, rack, in_use FROM printers WHERE id = ?", printerId).Scan(
+	if err := database.DB.QueryRow("SELECT id, name, color, rack, in_use, last_reserved_by, is_executive FROM printers WHERE id = ?", printerId).Scan(
 		&printer.Id,
 		&printer.Name,
 		&printer.Color,
 		&printer.Rack,
-		&printer.In_Use); err != nil {
+		&printer.In_Use,
+		&printer.Last_Reserved_By,
+		&printer.Is_Executive); err != nil {
 		return false, fmt.Errorf("failed to get printer: %v", err)
 	}
 
