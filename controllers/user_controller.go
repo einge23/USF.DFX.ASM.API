@@ -16,18 +16,18 @@ func CreateUser(c *gin.Context) {
 		return
 	}
 
-	failed, err := services.CreateUser(req)
+	success, err := services.CreateUser(req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"Internal server error": err.Error()})
 		return
 	}
 
-	if failed {
+	if !success {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Status not found"})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "User successfully added"})
+	c.JSON(http.StatusOK, true)
 }
 
 func SetUserTrained(c *gin.Context) {
@@ -40,13 +40,13 @@ func SetUserTrained(c *gin.Context) {
 	}
 
 	//create request with id used in the specified path
-	failed, err := services.SetUserTrained(id)
+	success, err := services.SetUserTrained(id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"internal server error": err.Error()})
 		return
 	}
 
-	if failed {
+	if !success {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Status not found"})
 		return
 	}
@@ -128,13 +128,13 @@ func SetUserExecutiveAccess(c *gin.Context) {
 		return
 	}
 
-	failed, err := services.SetUserExecutiveAccess(id)
+	success, err := services.SetUserExecutiveAccess(id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"Internal server error:": err.Error()})
 		return
 	}
 
-	if failed {
+	if !success {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Status not found"})
 		return
 	}

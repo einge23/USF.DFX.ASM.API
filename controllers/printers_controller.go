@@ -47,16 +47,16 @@ func SetPrinterExecutive(c *gin.Context) {
 		return
 	}
 
-	failed, err := services.SetPrinterExecutive(req)
+	success, err := services.SetPrinterExecutive(req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"Internal server error": err.Error()})
 		return
 	}
 
-	if failed {
+	if !success {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Status not found"})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "printer executive status successfully changed"})
+	c.JSON(http.StatusOK, true)
 }
