@@ -40,8 +40,7 @@ func SetUserTrained(c *gin.Context) {
 	}
 
 	//create request with id used in the specified path
-	req := services.SetUserTrainedRequest{UserId: id}
-	failed, err := services.SetUserTrained(req)
+	failed, err := services.SetUserTrained(id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"internal server error": err.Error()})
 		return
@@ -52,7 +51,7 @@ func SetUserTrained(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "User training status successfully updated"})
+	c.JSON(http.StatusOK, true)
 }
 
 func GetUserReservations(c *gin.Context) {
@@ -129,13 +128,7 @@ func SetUserExecutiveAccess(c *gin.Context) {
 		return
 	}
 
-	req := services.SetUserExecutiveAccessRequest{UserId: id}
-	if err := c.BindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request format"})
-		return
-	}
-
-	failed, err := services.SetUserExecutiveAccess(req)
+	failed, err := services.SetUserExecutiveAccess(id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"Internal server error:": err.Error()})
 		return
@@ -146,5 +139,5 @@ func SetUserExecutiveAccess(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "user executive status successfully changed"})
+	c.JSON(http.StatusOK, true)
 }
