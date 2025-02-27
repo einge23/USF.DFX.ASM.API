@@ -41,20 +41,15 @@ func ReservePrinter(c *gin.Context) {
 }
 
 func SetPrinterExecutive(c *gin.Context) {
-	var req services.SetPrinterExecRequest
-	if err := c.BindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request format"})
+
+	id := GetInfoFromPath(c, "printerID")
+	if id == -1 {
 		return
 	}
 
-	success, err := services.SetPrinterExecutive(req)
+	err := services.SetPrinterExecutive(id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"Internal server error": err.Error()})
-		return
-	}
-
-	if !success {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Status not found"})
 		return
 	}
 

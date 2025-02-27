@@ -45,14 +45,14 @@ func CreateUser(createUserRequest CreateUserRequest) (bool, error) {
 	return true, nil
 }
 
-func SetUserTrained(userId int) (bool, error) {
+func SetUserTrained(userId int) error {
 
 	//get trained status for the user from db
 	var trainedStatus bool
 	querySQL := `SELECT has_training FROM users WHERE id = ?`
 	err := database.DB.QueryRow(querySQL, userId).Scan(&trainedStatus)
 	if err != nil {
-		return false, fmt.Errorf("error getting user from db: %v", err)
+		return fmt.Errorf("error getting user from db: %v", err)
 	}
 
 	//toggle the trainedStatus
@@ -62,10 +62,10 @@ func SetUserTrained(userId int) (bool, error) {
 	updateSQL := `UPDATE users SET has_training = ? WHERE id = ?`
 	_, err = database.DB.Exec(updateSQL, newTrainedStatus, userId)
 	if err != nil {
-		return false, fmt.Errorf("error updating user training status: %v", err)
+		return fmt.Errorf("error updating user training status: %v", err)
 	}
 
-	return true, nil
+	return nil
 }
 
 func GetUserReservations(userId int) ([]models.ReservationDTO, error) {
@@ -118,14 +118,14 @@ func GetUserById(userID int) (*models.UserData, error) {
 	return &user, nil
 }
 
-func SetUserExecutiveAccess(userId int) (bool, error) {
+func SetUserExecutiveAccess(userId int) error {
 
 	var currentExecutiveAccess bool
 
 	querySQL := `SELECT has_executive_access FROM users WHERE id = ?`
 	err := database.DB.QueryRow(querySQL, userId).Scan(&currentExecutiveAccess)
 	if err != nil {
-		return false, fmt.Errorf("error getting user executive access from db: %v", err)
+		return fmt.Errorf("error getting user executive access from db: %v", err)
 	}
 
 	newExecutiveAccess := !currentExecutiveAccess
@@ -133,8 +133,8 @@ func SetUserExecutiveAccess(userId int) (bool, error) {
 	updateSQL := `UPDATE users SET has_executive_access = ? WHERE id = ?`
 	_, err = database.DB.Exec(updateSQL, newExecutiveAccess, userId)
 	if err != nil {
-		return false, fmt.Errorf("error updating user executive access: %v", err)
+		return fmt.Errorf("error updating user executive access: %v", err)
 	}
 
-	return true, nil //return 0
+	return nil //return 0
 }

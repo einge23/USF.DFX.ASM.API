@@ -4,7 +4,6 @@ import (
 	"gin-api/services"
 	"gin-api/util"
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -31,23 +30,15 @@ func CreateUser(c *gin.Context) {
 }
 
 func SetUserTrained(c *gin.Context) {
-	//get userID from path
-	userID := c.Param("userID")
-	id, err := strconv.Atoi(userID)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+
+	id := GetInfoFromPath(c, "userID")
+	if id == -1 {
 		return
 	}
 
-	//create request with id used in the specified path
-	success, err := services.SetUserTrained(id)
+	err := services.SetUserTrained(id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"internal server error": err.Error()})
-		return
-	}
-
-	if !success {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Status not found"})
 		return
 	}
 
@@ -55,10 +46,8 @@ func SetUserTrained(c *gin.Context) {
 }
 
 func GetUserReservations(c *gin.Context) {
-	userId := c.Param("userID")
-	id, err := strconv.Atoi(userId)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+	id := GetInfoFromPath(c, "userID")
+	if id == -1 {
 		return
 	}
 
@@ -72,10 +61,8 @@ func GetUserReservations(c *gin.Context) {
 }
 
 func GetActiveUserReservations(c *gin.Context) {
-	userId := c.Param("userID")
-	id, err := strconv.Atoi(userId)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+	id := GetInfoFromPath(c, "userID")
+	if id == -1 {
 		return
 	}
 
@@ -120,22 +107,15 @@ func GetUserById(c *gin.Context) {
 }
 
 func SetUserExecutiveAccess(c *gin.Context) {
-	//get userID from path
-	userID := c.Param("userID")
-	id, err := strconv.Atoi(userID)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+
+	id := GetInfoFromPath(c, "userID")
+	if id == -1 {
 		return
 	}
 
-	success, err := services.SetUserExecutiveAccess(id)
+	err := services.SetUserExecutiveAccess(id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"Internal server error:": err.Error()})
-		return
-	}
-
-	if !success {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Status not found"})
 		return
 	}
 

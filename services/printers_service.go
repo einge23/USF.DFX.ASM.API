@@ -152,27 +152,23 @@ func completeReservation(printerId, reservationId int) {
 	manager.Mutex.Unlock()
 }
 
-type SetPrinterExecRequest struct {
-	PrinterId int `json:"printer_id"`
-}
-
-func SetPrinterExecutive(setPrinterExecRequest SetPrinterExecRequest) (bool, error) {
+func SetPrinterExecutive(id int) error {
 
 	var currentExecutiveness bool
 
 	querySQL := `SELECT is_executive FROM printers WHERE id = ?`
-	err := database.DB.QueryRow(querySQL, setPrinterExecRequest.PrinterId).Scan(&currentExecutiveness)
+	err := database.DB.QueryRow(querySQL, id).Scan(&currentExecutiveness)
 	if err != nil {
-		return false, fmt.Errorf("error getting printer executiveness from db: %v", err)
+		return fmt.Errorf("error getting printer executiveness from db: %v", err)
 	}
 
 	newExecutiveness := !currentExecutiveness
 
 	updateSQL := `UPDATE printers SET is_executive = ? WHERE id = ?`
-	_, err = database.DB.Exec(updateSQL, newExecutiveness, setPrinterExecRequest.PrinterId)
+	_, err = database.DB.Exec(updateSQL, newExecutiveness, id)
 	if err != nil {
-		return false, fmt.Errorf("error updating printer executiveness: %v", err)
+		return fmt.Errorf("error updating printer executiveness: %v", err)
 	}
 
-	return true, nil //return 0
+	return nil //return 0
 }
