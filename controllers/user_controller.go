@@ -121,3 +121,25 @@ func SetUserExecutiveAccess(c *gin.Context) {
 
 	c.JSON(http.StatusOK, true)
 }
+
+func AddUserWeeklyMinutes(c *gin.Context) {
+
+	id := GetInfoFromPath(c, "userID")
+	if id == -1 {
+		return
+	}
+
+	var req services.AddUserWeeklyMinutesRequest
+	if err := c.BindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	err := services.AddUserWeeklyMinutes(id, req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"Internal server error:": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, true)
+}

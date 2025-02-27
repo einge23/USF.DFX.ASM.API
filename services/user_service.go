@@ -136,5 +136,29 @@ func SetUserExecutiveAccess(userId int) error {
 		return fmt.Errorf("error updating user executive access: %v", err)
 	}
 
-	return nil //return 0
+	return nil
+}
+
+type AddUserWeeklyMinutesRequest struct {
+	Minutes int `json:"minutes"`
+}
+
+func AddUserWeeklyMinutes(id int, request AddUserWeeklyMinutesRequest) error {
+	var currentWeeklyMinutes int
+
+	querySQL := `SELECT weekly_minutes FROM users WHERE id = ?`
+	err := database.DB.QueryRow(querySQL, id).Scan(&currentWeeklyMinutes)
+	if err != nil {
+		return fmt.Errorf("error getting user weekly minutes from db: %v", err)
+	}
+
+	newWeeklyMinutes := currentWeeklyMinutes + request.Minutes
+
+	updateSQL := `UPDATE users SET weekly_minutes = ? WHERE id = ?`
+	_, err = database.DB.Exec(updateSQL, newWeeklyMinutes, id)
+	if err != nil {
+		return fmt.Errorf("error adding minutes to user: %v", err)
+	}
+
+	return nil
 }

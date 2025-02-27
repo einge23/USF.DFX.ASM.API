@@ -109,6 +109,20 @@ func ReservePrinter(printerId int, userId int, timeMins int) (bool, error) {
 		return false, fmt.Errorf("failed to get reservation id: %v", err)
 	}
 
+	var currentWeeklyMinutes int
+	querySQL := `SELECT weekly_minutes FROM users WHERE id = ?`
+	err = database.DB.QueryRow(querySQL, userId).Scan(&currentWeeklyMinutes)
+	if err != nil {
+		return false, fmt.Errorf("error getting user weekly minutes from db: %v", err)
+	}
+
+	newWeeklyMinutes := currentWeeklyMinutes - timeMins
+	updateSQL := `UPDATE users SET weekly_minutes = ? WHERE id = ?`
+	_, err = database.DB.Exec(updateSQL, newWeeklyMinutes, userId)
+	if err != nil {
+		return false, fmt.Errorf("error subtracting minutes from user")
+	}
+
 	timer := time.NewTimer(time.Duration(timeMins) * time.Minute)
 	manager.Mutex.Lock()
 	manager.Reservations[int(reservationId)] = &models.Reservation{
