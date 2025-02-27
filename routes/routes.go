@@ -16,41 +16,42 @@ func SetupRouter(r *gin.Engine) {
 			auth.POST("/refreshToken", controllers.RefreshToken)
 		}
 		protected := api.Group("")
-        protected.Use(middleware.AuthMiddleware())
-        {
-            printers := protected.Group("/printers")
-            {
-                printers.GET("/getPrinters", controllers.GetPrinters)
-                printers.PUT("/reservePrinter", controllers.ReservePrinter)
-            }
-            users := protected.Group("/users")
-            {
-                users.GET("/reservations/:userID", 
-                    middleware.UserOwnershipPermission(), 
-                    controllers.GetUserReservations,
-                )
-                users.GET("/activeReservations/:userID", 
-                    middleware.UserOwnershipPermission(), 
-                    controllers.GetActiveUserReservations,
-                )
-            }
+		protected.Use(middleware.AuthMiddleware())
+		{
+			printers := protected.Group("/printers")
+			{
+				printers.GET("/getPrinters", controllers.GetPrinters)
+				printers.PUT("/reservePrinter", controllers.ReservePrinter)
+			}
+			users := protected.Group("/users")
+			{
+				users.GET("/reservations/:userID",
+					middleware.UserOwnershipPermission(),
+					controllers.GetUserReservations,
+				)
+				users.GET("/activeReservations/:userID",
+					middleware.UserOwnershipPermission(),
+					controllers.GetActiveUserReservations,
+				)
+			}
 
-            // Admin routes
-            admin := protected.Group("/admin")
-            admin.Use(middleware.AdminPermission())
-            {
-                users := admin.Group("/users")
-                {
-                    users.POST("/create", controllers.CreateUser)
-                    users.POST("/getUser", controllers.GetUserById)
-                    users.PUT("/setTrained/:userID", controllers.SetUserTrained)
-                    users.PUT("/setExecutiveAccess/:userID", controllers.SetUserExecutiveAccess)
-                }
-                printers := admin.Group("/printers")
-                {
-                    printers.PUT("/setExecutive/:printerID", controllers.SetPrinterExecutive)
-                }
-            }
-        }
+			// Admin routes
+			admin := protected.Group("/admin")
+			admin.Use(middleware.AdminPermission())
+			{
+				users := admin.Group("/users")
+				{
+					users.POST("/create", controllers.CreateUser)
+					users.POST("/getUser", controllers.GetUserById)
+					users.PUT("/setTrained/:userID", controllers.SetUserTrained)
+					users.PUT("/setExecutiveAccess/:userID", controllers.SetUserExecutiveAccess)
+					users.PUT("/addWeeklyMinutes/:userID", controllers.AddUserWeeklyMinutes)
+				}
+				printers := admin.Group("/printers")
+				{
+					printers.PUT("/setExecutive/:printerID", controllers.SetPrinterExecutive)
+				}
+			}
+		}
 	}
 }
