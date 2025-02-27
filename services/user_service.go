@@ -70,7 +70,7 @@ func SetUserTrained(userId int) error {
 
 func GetUserReservations(userId int) ([]models.ReservationDTO, error) {
 	var reservations []models.ReservationDTO
-	querySQL := `SELECT id, userId, time_reserved, time_complete, printerid, is_active FROM reservations WHERE userId = ? ORDER BY time_reserved DESC`
+	querySQL := `SELECT id, userId, time_reserved, time_complete, printerid, is_active, is_egn_reservation FROM reservations WHERE userId = ? ORDER BY time_reserved DESC`
 	rows, err := database.DB.Query(querySQL, userId)
 	if err != nil {
 		return nil, fmt.Errorf("error getting reservations from db: %v", err)
@@ -79,7 +79,7 @@ func GetUserReservations(userId int) ([]models.ReservationDTO, error) {
 
 	for rows.Next() {
 		var reservation models.ReservationDTO
-		err := rows.Scan(&reservation.Id, &reservation.UserId, &reservation.TimeReserved, &reservation.TimeComplete, &reservation.PrinterId, &reservation.IsActive)
+		err := rows.Scan(&reservation.Id, &reservation.UserId, &reservation.TimeReserved, &reservation.TimeComplete, &reservation.PrinterId, &reservation.IsActive, &reservation.IsEgnReservation)
 		if err != nil {
 			return nil, fmt.Errorf("error scanning reservation: %v", err)
 		}

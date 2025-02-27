@@ -27,4 +27,5 @@ type ReservationDTO struct {
 	TimeReserved time.Time `json:"time_reserved"`
 	TimeComplete time.Time `json:"time_complete"`
 	IsActive bool `json:"is_active"`
+	IsEgnReservation bool `json:"is_egn_reservation"`
 }
