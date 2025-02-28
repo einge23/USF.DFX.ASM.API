@@ -26,17 +26,28 @@ func Login(loginRequest LoginRequest) (*models.UserData, *util.TokenPair, error)
     }
 
 	var userData models.UserData
-	err = database.DB.QueryRow("SELECT id, username, has_training, admin FROM users WHERE id = ?", cardData.Id).Scan(
+	var nullableBanTime sql.NullTime
+	err = database.DB.QueryRow("SELECT id, username, has_training, admin, has_executive_access, is_egn_lab, ban_time, weekly_minutes FROM users WHERE id = ?", cardData.Id).Scan(
 		&userData.Id,
 		&userData.Username,
 		&userData.Trained,
 		&userData.Admin,
+		&userData.Has_Executive_Access,
+		&userData.Is_Egn_Lab,
+		&nullableBanTime,
+		&userData.Weekly_Minutes,
 	)
 	if err != nil {
 		if err == sql.ErrNoRows {
             return nil, tokenPair, ErrorUserNotFound
 		}
 		return nil, tokenPair, fmt.Errorf("database error: %v", err)
+	}
+
+	if nullableBanTime.Valid {
+		userData.Ban_Time_End = nullableBanTime
+	} else {
+		userData.Ban_Time_End = sql.NullTime{Valid: false}
 	}
 
 	if !userData.Trained {
