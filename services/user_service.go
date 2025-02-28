@@ -178,9 +178,10 @@ func SetUserBanTime(id int, request SetUserBanTimeRequest) error {
 	}
 
 	var newBanTimeEnd time.Time
-	if currentBanTimeEnd == nil {
+
+	if currentBanTimeEnd == nil { //if null, set to current time + requested ban time
 		newBanTimeEnd = time.Now().Add(time.Duration(request.BanTime) * time.Hour)
-	} else {
+	} else { //if not null, set to existing ban time end + requested ban time
 		newBanTimeEnd = currentBanTimeEnd.Add(time.Duration(request.BanTime) * time.Hour)
 	}
 

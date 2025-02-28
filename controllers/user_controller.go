@@ -31,7 +31,7 @@ func CreateUser(c *gin.Context) {
 
 func SetUserTrained(c *gin.Context) {
 
-	id := GetInfoFromPath(c, "userID")
+	id := util.GetInfoFromPath(c, "userID")
 	if id == -1 {
 		return
 	}
@@ -46,7 +46,7 @@ func SetUserTrained(c *gin.Context) {
 }
 
 func GetUserReservations(c *gin.Context) {
-	id := GetInfoFromPath(c, "userID")
+	id := util.GetInfoFromPath(c, "userID")
 	if id == -1 {
 		return
 	}
@@ -61,7 +61,7 @@ func GetUserReservations(c *gin.Context) {
 }
 
 func GetActiveUserReservations(c *gin.Context) {
-	id := GetInfoFromPath(c, "userID")
+	id := util.GetInfoFromPath(c, "userID")
 	if id == -1 {
 		return
 	}
@@ -108,7 +108,7 @@ func GetUserById(c *gin.Context) {
 
 func SetUserExecutiveAccess(c *gin.Context) {
 
-	id := GetInfoFromPath(c, "userID")
+	id := util.GetInfoFromPath(c, "userID")
 	if id == -1 {
 		return
 	}
@@ -124,7 +124,7 @@ func SetUserExecutiveAccess(c *gin.Context) {
 
 func AddUserWeeklyMinutes(c *gin.Context) {
 
-	id := GetInfoFromPath(c, "userID")
+	id := util.GetInfoFromPath(c, "userID")
 	if id == -1 {
 		return
 	}
@@ -146,7 +146,7 @@ func AddUserWeeklyMinutes(c *gin.Context) {
 
 func SetUserBanTime(c *gin.Context) {
 
-	id := GetInfoFromPath(c, "userID")
+	id := util.GetInfoFromPath(c, "userID")
 	if id == -1 {
 		return
 	}

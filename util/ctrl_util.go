@@ -1,4 +1,4 @@
-package controllers
+package util
 
 import (
 	"fmt"
@@ -8,7 +8,9 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// given a string literal of what should be pulled out of the path, return that value
 func GetInfoFromPath(c *gin.Context, requestedInfo string) int {
+
 	infoString := c.Param(requestedInfo)
 	info, err := strconv.Atoi(infoString)
 	if err != nil {
