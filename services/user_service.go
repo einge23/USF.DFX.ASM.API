@@ -6,6 +6,7 @@ import (
 	"gin-api/database"
 	"gin-api/models"
 	"gin-api/util"
+	"time"
 )
 
 type CreateUserRequest struct {
@@ -158,6 +159,35 @@ func AddUserWeeklyMinutes(id int, request AddUserWeeklyMinutesRequest) error {
 	_, err = database.DB.Exec(updateSQL, newWeeklyMinutes, id)
 	if err != nil {
 		return fmt.Errorf("error adding minutes to user: %v", err)
+	}
+
+	return nil
+}
+
+type SetUserBanTimeRequest struct {
+	BanTime int `json:"ban_time"`
+}
+
+func SetUserBanTime(id int, request SetUserBanTimeRequest) error {
+	var currentBanTimeEnd *time.Time
+
+	querySQL := `SELECT ban_time_end FROM users WHERE id = ?`
+	err := database.DB.QueryRow(querySQL, id).Scan(&currentBanTimeEnd)
+	if err != nil {
+		return fmt.Errorf("error getting user ban time from db: %v", err)
+	}
+
+	var newBanTimeEnd time.Time
+	if currentBanTimeEnd == nil {
+		newBanTimeEnd = time.Now().Add(time.Duration(request.BanTime) * time.Hour)
+	} else {
+		newBanTimeEnd = currentBanTimeEnd.Add(time.Duration(request.BanTime) * time.Hour)
+	}
+
+	updateSQL := `UPDATE users SET ban_time_end = ? WHERE id = ?`
+	_, err = database.DB.Exec(updateSQL, newBanTimeEnd, id)
+	if err != nil {
+		return fmt.Errorf("error adding ban time to user: %v", err)
 	}
 
 	return nil

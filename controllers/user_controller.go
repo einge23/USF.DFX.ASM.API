@@ -143,3 +143,25 @@ func AddUserWeeklyMinutes(c *gin.Context) {
 
 	c.JSON(http.StatusOK, true)
 }
+
+func SetUserBanTime(c *gin.Context) {
+
+	id := GetInfoFromPath(c, "userID")
+	if id == -1 {
+		return
+	}
+
+	var req services.SetUserBanTimeRequest
+	if err := c.BindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	err := services.SetUserBanTime(id, req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"Internal server error:": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, true)
+}
