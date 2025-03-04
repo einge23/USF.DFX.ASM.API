@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -11,7 +12,8 @@ func GetInfoFromPath(c *gin.Context, requestedInfo string) int {
 	infoString := c.Param(requestedInfo)
 	info, err := strconv.Atoi(infoString)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+		errorMSG := fmt.Sprintf("Invalid %s", requestedInfo)
+		c.JSON(http.StatusBadRequest, gin.H{"error": errorMSG})
 		return -1
 	}
 	return info
