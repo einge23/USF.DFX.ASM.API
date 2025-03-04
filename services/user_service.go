@@ -168,7 +168,19 @@ type SetUserBanTimeRequest struct {
 	BanTime int `json:"ban_time"`
 }
 
+// Set the user's ban time. Grab id from path, get time in hours from json body. A -1 in json body means set the
+// user's ban_time_end back to NULL in the database. If there is no ban time, the ban becomes current time + hours
+// requested. If there is a current ban, the ban becomes current ban date and time + requested hours, extending the ban.
 func SetUserBanTime(id int, request SetUserBanTimeRequest) error {
+
+	if request.BanTime == -1 { //if passing in -1, set ban_time_end back to NULL in db
+		updateSQL := `UPDATE users SET ban_time_end = ? WHERE id = ?`
+		_, err := database.DB.Exec(updateSQL, nil, id)
+		if err != nil {
+			return fmt.Errorf("error setting ban time to NULL for user: %v", err)
+		}
+		return nil
+	}
 	var currentBanTimeEnd *time.Time
 
 	querySQL := `SELECT ban_time_end FROM users WHERE id = ?`
