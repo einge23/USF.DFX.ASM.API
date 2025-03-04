@@ -110,18 +110,11 @@ func GetActiveUserReservations(userId int) ([]models.ReservationDTO, error) {
 
 func GetUserById(userID int) (*models.UserData, error) {
 	var user models.UserData
-	var nullableBanTime sql.NullTime
 	querySQL := `SELECT id, username, has_training, admin, has_executive_access, is_egn_lab, ban_time_end, weekly_minutes FROM users WHERE id = ?`
-	err := database.DB.QueryRow(querySQL, userID).Scan(&user.Id, &user.Username, &user.Trained, &user.Admin, &user.Has_Executive_Access, &user.Is_Egn_Lab, &nullableBanTime, &user.Weekly_Minutes)
+	err := database.DB.QueryRow(querySQL, userID).Scan(&user.Id, &user.Username, &user.Trained, &user.Admin, &user.Has_Executive_Access, &user.Is_Egn_Lab, &user.Ban_Time_End, &user.Weekly_Minutes)
 	if err != nil {
 		return nil, fmt.Errorf("error getting user from db: %v", err)
 	}
-	if nullableBanTime.Valid {
-		user.Ban_Time_End = nullableBanTime
-	} else {
-		user.Ban_Time_End = sql.NullTime{Valid: false}
-	}
-
 	return &user, nil
 }
 

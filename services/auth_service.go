@@ -26,15 +26,14 @@ func Login(loginRequest LoginRequest) (*models.UserData, *util.TokenPair, error)
     }
 
 	var userData models.UserData
-	var nullableBanTime sql.NullTime
-	err = database.DB.QueryRow("SELECT id, username, has_training, admin, has_executive_access, is_egn_lab, ban_time, weekly_minutes FROM users WHERE id = ?", cardData.Id).Scan(
+	err = database.DB.QueryRow("SELECT id, username, has_training, admin, has_executive_access, is_egn_lab, ban_time_end, weekly_minutes FROM users WHERE id = ?", cardData.Id).Scan(
 		&userData.Id,
 		&userData.Username,
 		&userData.Trained,
 		&userData.Admin,
 		&userData.Has_Executive_Access,
 		&userData.Is_Egn_Lab,
-		&nullableBanTime,
+		&userData.Ban_Time_End,
 		&userData.Weekly_Minutes,
 	)
 	if err != nil {
@@ -42,12 +41,6 @@ func Login(loginRequest LoginRequest) (*models.UserData, *util.TokenPair, error)
             return nil, tokenPair, ErrorUserNotFound
 		}
 		return nil, tokenPair, fmt.Errorf("database error: %v", err)
-	}
-
-	if nullableBanTime.Valid {
-		userData.Ban_Time_End = nullableBanTime
-	} else {
-		userData.Ban_Time_End = sql.NullTime{Valid: false}
 	}
 
 	if !userData.Trained {

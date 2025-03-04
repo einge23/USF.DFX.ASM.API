@@ -57,17 +57,24 @@ func ReservePrinter(printerId int, userId int, timeMins int) (bool, error) {
 	}
 
 	var printer models.Printer
+	var lastReservedBy sql.NullString
 	if err := database.DB.QueryRow("SELECT id, name, color, rack, in_use, last_reserved_by, is_executive, is_egn_printer FROM printers WHERE id = ?", printerId).Scan(
 		&printer.Id,
 		&printer.Name,
 		&printer.Color,
 		&printer.Rack,
 		&printer.In_Use,
-		&printer.Last_Reserved_By,
+		&lastReservedBy,
 		&printer.Is_Executive,
 		&printer.Is_Egn_Printer); err != nil {
 		return false, fmt.Errorf("failed to get printer: %v", err)
 	}
+
+	if lastReservedBy.Valid {
+        printer.Last_Reserved_By = lastReservedBy.String
+    } else {
+        printer.Last_Reserved_By = ""
+    }
 
 	if printer.In_Use {
 		return false, fmt.Errorf("printer is already in use")
@@ -94,7 +101,7 @@ func ReservePrinter(printerId int, userId int, timeMins int) (bool, error) {
 	time_complete := time.Now().Add(time.Duration(timeMins) * time.Minute)
 
 	result, err = database.DB.Exec(
-		"INSERT INTO reservations (printerid, userid, time_reserved, time_complete, is_active, is_egn_reservation) values (?, ?, ?, ?, ?)",
+		"INSERT INTO reservations (printerid, userid, time_reserved, time_complete, is_active, is_egn_reservation) values (?, ?, ?, ?, ?, ?)",
 		printerId,
 		userId,
 		time_reserved,
