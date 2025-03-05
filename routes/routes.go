@@ -46,6 +46,7 @@ func SetupRouter(r *gin.Engine) {
 					users.PUT("/setTrained/:userID", controllers.SetUserTrained)
 					users.PUT("/setExecutiveAccess/:userID", controllers.SetUserExecutiveAccess)
 					users.PUT("/addWeeklyMinutes/:userID", controllers.AddUserWeeklyMinutes)
+					users.PUT("/setBanTime/:userID", controllers.SetUserBanTime)
 				}
 				printers := admin.Group("/printers")
 				{

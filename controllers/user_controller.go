@@ -31,7 +31,7 @@ func CreateUser(c *gin.Context) {
 
 func SetUserTrained(c *gin.Context) {
 
-	id := GetInfoFromPath(c, "userID")
+	id := util.GetInfoFromPath(c, "userID")
 	if id == -1 {
 		return
 	}
@@ -46,7 +46,7 @@ func SetUserTrained(c *gin.Context) {
 }
 
 func GetUserReservations(c *gin.Context) {
-	id := GetInfoFromPath(c, "userID")
+	id := util.GetInfoFromPath(c, "userID")
 	if id == -1 {
 		return
 	}
@@ -61,7 +61,7 @@ func GetUserReservations(c *gin.Context) {
 }
 
 func GetActiveUserReservations(c *gin.Context) {
-	id := GetInfoFromPath(c, "userID")
+	id := util.GetInfoFromPath(c, "userID")
 	if id == -1 {
 		return
 	}
@@ -108,7 +108,7 @@ func GetUserById(c *gin.Context) {
 
 func SetUserExecutiveAccess(c *gin.Context) {
 
-	id := GetInfoFromPath(c, "userID")
+	id := util.GetInfoFromPath(c, "userID")
 	if id == -1 {
 		return
 	}
@@ -124,7 +124,7 @@ func SetUserExecutiveAccess(c *gin.Context) {
 
 func AddUserWeeklyMinutes(c *gin.Context) {
 
-	id := GetInfoFromPath(c, "userID")
+	id := util.GetInfoFromPath(c, "userID")
 	if id == -1 {
 		return
 	}
@@ -136,6 +136,28 @@ func AddUserWeeklyMinutes(c *gin.Context) {
 	}
 
 	err := services.AddUserWeeklyMinutes(id, req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"Internal server error:": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, true)
+}
+
+func SetUserBanTime(c *gin.Context) {
+
+	id := util.GetInfoFromPath(c, "userID")
+	if id == -1 {
+		return
+	}
+
+	var req services.SetUserBanTimeRequest
+	if err := c.BindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	err := services.SetUserBanTime(id, req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"Internal server error:": err.Error()})
 		return

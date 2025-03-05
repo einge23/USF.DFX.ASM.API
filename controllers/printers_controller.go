@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"gin-api/services"
+	"gin-api/util"
 	"log"
 	"net/http"
 
@@ -42,7 +43,7 @@ func ReservePrinter(c *gin.Context) {
 
 func SetPrinterExecutive(c *gin.Context) {
 
-	id := GetInfoFromPath(c, "printerID")
+	id := util.GetInfoFromPath(c, "printerID")
 	if id == -1 {
 		return
 	}
