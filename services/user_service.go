@@ -71,7 +71,7 @@ func SetUserTrained(userId int) error {
 
 func GetUserReservations(userId int) ([]models.ReservationDTO, error) {
 	var reservations []models.ReservationDTO
-	querySQL := `SELECT id, userId, time_reserved, time_complete, printerid, is_active FROM reservations WHERE userId = ? ORDER BY time_reserved DESC`
+	querySQL := `SELECT id, userId, time_reserved, time_complete, printerid, is_active, is_egn_reservation FROM reservations WHERE userId = ? ORDER BY time_reserved DESC`
 	rows, err := database.DB.Query(querySQL, userId)
 	if err != nil {
 		return nil, fmt.Errorf("error getting reservations from db: %v", err)
@@ -80,7 +80,7 @@ func GetUserReservations(userId int) ([]models.ReservationDTO, error) {
 
 	for rows.Next() {
 		var reservation models.ReservationDTO
-		err := rows.Scan(&reservation.Id, &reservation.UserId, &reservation.TimeReserved, &reservation.TimeComplete, &reservation.PrinterId, &reservation.IsActive)
+		err := rows.Scan(&reservation.Id, &reservation.UserId, &reservation.Time_Reserved, &reservation.Time_Complete, &reservation.PrinterId, &reservation.Is_Active, &reservation.Is_Egn_Reservation)
 		if err != nil {
 			return nil, fmt.Errorf("error scanning reservation: %v", err)
 		}
@@ -91,7 +91,7 @@ func GetUserReservations(userId int) ([]models.ReservationDTO, error) {
 
 func GetActiveUserReservations(userId int) ([]models.ReservationDTO, error) {
 	var reservations []models.ReservationDTO
-	querySQL := `SELECT id, userId, time_reserved, time_complete, printerid, is_active FROM reservations WHERE userId = ? AND is_active = 1 ORDER BY time_reserved DESC`
+	querySQL := `SELECT id, userId, time_reserved, time_complete, printerid, is_active, is_egn_reservation FROM reservations WHERE userId = ? AND is_active = 1 ORDER BY time_reserved DESC`
 	rows, err := database.DB.Query(querySQL, userId)
 	if err != nil {
 		return nil, fmt.Errorf("error getting reservations from db: %v", err)
@@ -100,7 +100,7 @@ func GetActiveUserReservations(userId int) ([]models.ReservationDTO, error) {
 
 	for rows.Next() {
 		var reservation models.ReservationDTO
-		err := rows.Scan(&reservation.Id, &reservation.UserId, &reservation.TimeReserved, &reservation.TimeComplete, &reservation.PrinterId, &reservation.IsActive)
+		err := rows.Scan(&reservation.Id, &reservation.UserId, &reservation.Time_Reserved, &reservation.Time_Complete, &reservation.PrinterId, &reservation.Is_Active, &reservation.Is_Egn_Reservation)
 		if err != nil {
 			return nil, fmt.Errorf("error scanning reservation: %v", err)
 		}
@@ -111,8 +111,8 @@ func GetActiveUserReservations(userId int) ([]models.ReservationDTO, error) {
 
 func GetUserById(userID int) (*models.UserData, error) {
 	var user models.UserData
-	querySQL := `SELECT id, username, has_training, admin, has_executive_access FROM users WHERE id = ?`
-	err := database.DB.QueryRow(querySQL, userID).Scan(&user.Id, &user.Username, &user.Trained, &user.Admin, &user.Has_Executive_Access)
+	querySQL := `SELECT id, username, has_training, admin, has_executive_access, is_egn_lab, ban_time_end, weekly_minutes FROM users WHERE id = ?`
+	err := database.DB.QueryRow(querySQL, userID).Scan(&user.Id, &user.Username, &user.Trained, &user.Admin, &user.Has_Executive_Access, &user.Is_Egn_Lab, &user.Ban_Time_End, &user.Weekly_Minutes)
 	if err != nil {
 		return nil, fmt.Errorf("error getting user from db: %v", err)
 	}
