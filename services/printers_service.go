@@ -10,7 +10,7 @@ import (
 )
 
 func GetPrinters() ([]models.Printer, error) {
-    rows, err := database.DB.Query("SELECT id, name, color, rack, in_use, last_reserved_by, is_executive FROM printers")
+    rows, err := database.DB.Query("SELECT id, name, color, rack, in_use, last_reserved_by, is_executive FROM printers order by rack asc")
     if err != nil {
         return nil, fmt.Errorf("query error: %v", err)
     }
