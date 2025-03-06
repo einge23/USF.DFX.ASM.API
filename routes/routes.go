@@ -34,6 +34,10 @@ func SetupRouter(r *gin.Engine) {
 					controllers.GetActiveUserReservations,
 				)
 			}
+			settings := protected.Group("/settings")
+			{
+				settings.GET("/getSettings", controllers.GetSettings)
+			}
 
 			// Admin routes
 			admin := protected.Group("/admin")

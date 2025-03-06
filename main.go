@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"gin-api/database"
+	"gin-api/models"
 	"gin-api/routes"
 	"gin-api/util"
 	"log"
@@ -11,6 +12,8 @@ import (
 	"github.com/gin-gonic/gin"
 	_ "github.com/mattn/go-sqlite3"
 )
+
+var settings models.Settings
 
 func main() {
 	log.Println("Starting the application...")
@@ -22,6 +25,8 @@ func main() {
 
 	database.SetDB(db)
 	log.Println("Database connection established.")
+	
+
 
 	r := gin.New()
 
