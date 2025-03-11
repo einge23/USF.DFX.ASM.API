@@ -117,6 +117,7 @@ func ReservePrinter(printerId int, userId int, timeMins int) (bool, error) {
 		return false, fmt.Errorf("failed to get reservation id: %v", err)
 	}
 
+	//get user's weeklyMinutes
 	var currentWeeklyMinutes int
 	querySQL := `SELECT weekly_minutes FROM users WHERE id = ?`
 	err = database.DB.QueryRow(querySQL, userId).Scan(&currentWeeklyMinutes)
@@ -124,6 +125,7 @@ func ReservePrinter(printerId int, userId int, timeMins int) (bool, error) {
 		return false, fmt.Errorf("error getting user weekly minutes from db: %v", err)
 	}
 
+	//subtract reservation's duration from weeklyMinutes
 	newWeeklyMinutes := currentWeeklyMinutes - timeMins
 	updateSQL := `UPDATE users SET weekly_minutes = ? WHERE id = ?`
 	_, err = database.DB.Exec(updateSQL, newWeeklyMinutes, userId)

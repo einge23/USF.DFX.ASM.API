@@ -34,6 +34,10 @@ func SetupRouter(r *gin.Engine) {
 					controllers.GetActiveUserReservations,
 				)
 			}
+			settings := protected.Group("/settings")
+			{
+				settings.GET("/getSettings", controllers.GetSettings)
+			}
 
 			// Admin routes
 			admin := protected.Group("/admin")
@@ -51,6 +55,10 @@ func SetupRouter(r *gin.Engine) {
 				printers := admin.Group("/printers")
 				{
 					printers.PUT("/setExecutive/:printerID", controllers.SetPrinterExecutive)
+				}
+				settings := admin.Group("/settings")
+				{
+					settings.PUT("/setSettings", controllers.SetSettings)
 				}
 			}
 		}

@@ -22,6 +22,8 @@ func main() {
 
 	database.SetDB(db)
 	log.Println("Database connection established.")
+	
+
 
 	r := gin.New()
 
