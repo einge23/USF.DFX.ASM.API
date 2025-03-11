@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"gin-api/database"
 	"gin-api/models"
+	"gin-api/util"
 	"log"
 	"time"
 )
@@ -133,8 +134,11 @@ func ReservePrinter(printerId int, userId int, timeMins int) (bool, error) {
 		return false, fmt.Errorf("error subtracting minutes from user")
 	}
 
-	//toggle relevant GPIO pin to HIGH and allow power to printer
-	test := util.printerIdToGpioMap[printerId]
+	//turn on the printer
+	_, err = util.TurnOnPrinter(printerId)
+	if err != nil {
+		return false, fmt.Errorf("error turning on printer: %v", err)
+	}
 
 	//set timer to complete/end the reservation
 	timer := time.NewTimer(time.Duration(timeMins) * time.Minute)
@@ -179,6 +183,12 @@ func completeReservation(printerId, reservationId int) {
 	manager.Mutex.Lock()
 	delete(manager.Reservations, reservationId)
 	manager.Mutex.Unlock()
+
+	//Turn off the printer
+	_, err = util.TurnOffPrinter(printerId)
+	if err != nil {
+		log.Printf("failed to turn off printer: %v", err)
+	}
 }
 
 func SetPrinterExecutive(id int) error {
