@@ -5,36 +5,37 @@ import (
 	"fmt"
 	"gin-api/database"
 	"gin-api/models"
+	"gin-api/util"
 	"log"
 	"time"
 )
 
 func GetPrinters() ([]models.Printer, error) {
-    rows, err := database.DB.Query("SELECT id, name, color, rack, in_use, last_reserved_by, is_executive FROM printers order by rack asc")
-    if err != nil {
-        return nil, fmt.Errorf("query error: %v", err)
-    }
-    defer rows.Close()
+	rows, err := database.DB.Query("SELECT id, name, color, rack, in_use, last_reserved_by, is_executive FROM printers order by rack asc")
+	if err != nil {
+		return nil, fmt.Errorf("query error: %v", err)
+	}
+	defer rows.Close()
 
-    var printers []models.Printer
-    for rows.Next() {
-        var p models.Printer
-        var lastReservedBy sql.NullString
-        if err := rows.Scan(&p.Id, &p.Name, &p.Color, &p.Rack, &p.In_Use, &lastReservedBy, &p.Is_Executive); err != nil {
-            return nil, fmt.Errorf("scan error: %v", err)
-        }
-        if lastReservedBy.Valid {
-            p.Last_Reserved_By = lastReservedBy.String
-        } else {
-            p.Last_Reserved_By = ""
-        }
-        printers = append(printers, p)
-    }
+	var printers []models.Printer
+	for rows.Next() {
+		var p models.Printer
+		var lastReservedBy sql.NullString
+		if err := rows.Scan(&p.Id, &p.Name, &p.Color, &p.Rack, &p.In_Use, &lastReservedBy, &p.Is_Executive); err != nil {
+			return nil, fmt.Errorf("scan error: %v", err)
+		}
+		if lastReservedBy.Valid {
+			p.Last_Reserved_By = lastReservedBy.String
+		} else {
+			p.Last_Reserved_By = ""
+		}
+		printers = append(printers, p)
+	}
 
-    if err = rows.Err(); err != nil {
-        return nil, fmt.Errorf("rows error: %v", err)
-    }
-    return printers, nil
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("rows error: %v", err)
+	}
+	return printers, nil
 }
 
 type ReservePrinterRequest struct {
@@ -71,14 +72,22 @@ func ReservePrinter(printerId int, userId int, timeMins int) (bool, error) {
 	}
 
 	if lastReservedBy.Valid {
-        printer.Last_Reserved_By = lastReservedBy.String
-    } else {
-        printer.Last_Reserved_By = ""
-    }
+		printer.Last_Reserved_By = lastReservedBy.String
+	} else {
+		printer.Last_Reserved_By = ""
+	}
 
 	if printer.In_Use {
 		return false, fmt.Errorf("printer is already in use")
 	}
+
+	//Turn on printer
+	_, err := util.TurnOnPrinter(printerId)
+	if err != nil {
+		return false, fmt.Errorf("error turning on printer: %v", err)
+	}
+
+	//Set printer as 'in use' in the database
 	result, err := database.DB.Exec(
 		"UPDATE printers SET in_use = TRUE, last_reserved_by = ? WHERE id = ?",
 		user.Username,
@@ -100,6 +109,7 @@ func ReservePrinter(printerId int, userId int, timeMins int) (bool, error) {
 	time_reserved := time.Now()
 	time_complete := time.Now().Add(time.Duration(timeMins) * time.Minute)
 
+	//create reservation and add it to reservations table as an entry
 	result, err = database.DB.Exec(
 		"INSERT INTO reservations (printerid, userid, time_reserved, time_complete, is_active, is_egn_reservation) values (?, ?, ?, ?, ?, ?)",
 		printerId,
@@ -133,17 +143,18 @@ func ReservePrinter(printerId int, userId int, timeMins int) (bool, error) {
 		return false, fmt.Errorf("error subtracting minutes from user")
 	}
 
+	//set up timer to complete/end the reservation. calls 'completeReservation()' function when the timer is up.
 	timer := time.NewTimer(time.Duration(timeMins) * time.Minute)
 	manager.Mutex.Lock()
 	manager.Reservations[int(reservationId)] = &models.Reservation{
-		Id:           int(reservationId),
-		PrinterId:    printerId,
-		UserId:       userId,
-		Time_Reserved: time_reserved,
-		Time_Complete: time_complete,
-		Is_Active:     true,
+		Id:                 int(reservationId),
+		PrinterId:          printerId,
+		UserId:             userId,
+		Time_Reserved:      time_reserved,
+		Time_Complete:      time_complete,
+		Is_Active:          true,
 		Is_Egn_Reservation: printer.Is_Egn_Printer,
-		Timer:        timer,
+		Timer:              timer,
 	}
 	manager.Mutex.Unlock()
 
@@ -155,8 +166,16 @@ func ReservePrinter(printerId int, userId int, timeMins int) (bool, error) {
 	return true, nil
 }
 
+// turn off the printer, set the relevant printer as not in use, set the reservation to no longer be active
 func completeReservation(printerId, reservationId int) {
-	_, err := database.DB.Exec(
+
+	//Turn off the printer
+	_, err := util.TurnOffPrinter(printerId)
+	if err != nil {
+		log.Printf("failed to turn off printer: %v", err)
+	}
+
+	_, err = database.DB.Exec(
 		"UPDATE printers SET in_use = FALSE WHERE id = ?",
 		printerId,
 	)
@@ -195,5 +214,5 @@ func SetPrinterExecutive(id int) error {
 		return fmt.Errorf("error updating printer executiveness: %v", err)
 	}
 
-	return nil //return 0
+	return nil
 }

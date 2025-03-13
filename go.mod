@@ -9,6 +9,8 @@ require (
 	github.com/joho/godotenv v1.5.1
 	github.com/mattn/go-sqlite3 v1.14.24
 	github.com/ulule/limiter/v3 v3.11.2
+	periph.io/x/conn/v3 v3.7.2
+	periph.io/x/host/v3 v3.8.3
 )
 
 require (
