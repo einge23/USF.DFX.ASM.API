@@ -8,11 +8,19 @@ import (
 	"periph.io/x/host/v3/rpi"
 )
 
-var PrinterIdToGpio PrinterToGpioMap
+var PrinterIdToGpio = NewPrinterToGpioMap()
 
 type PrinterToGpioMap struct {
 	Map       map[int]gpio.PinIO
 	populated bool
+}
+
+//constructor
+func NewPrinterToGpioMap() PrinterToGpioMap {
+    return PrinterToGpioMap{
+        Map:       make(map[int]gpio.PinIO),
+        populated: false,
+    }
 }
 
 type PinWithMutex struct {

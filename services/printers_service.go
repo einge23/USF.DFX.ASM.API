@@ -80,6 +80,13 @@ func ReservePrinter(printerId int, userId int, timeMins int) (bool, error) {
 	if printer.In_Use {
 		return false, fmt.Errorf("printer is already in use")
 	}
+
+	//Turn on printer
+	_, err := util.TurnOnPrinter(printerId)
+	if err != nil {
+		return false, fmt.Errorf("error turning on printer: %v", err)
+	}
+
 	result, err := database.DB.Exec(
 		"UPDATE printers SET in_use = TRUE, last_reserved_by = ? WHERE id = ?",
 		user.Username,
@@ -132,12 +139,6 @@ func ReservePrinter(printerId int, userId int, timeMins int) (bool, error) {
 	_, err = database.DB.Exec(updateSQL, newWeeklyMinutes, userId)
 	if err != nil {
 		return false, fmt.Errorf("error subtracting minutes from user")
-	}
-
-	//turn on the printer
-	_, err = util.TurnOnPrinter(printerId)
-	if err != nil {
-		return false, fmt.Errorf("error turning on printer: %v", err)
 	}
 
 	//set timer to complete/end the reservation
