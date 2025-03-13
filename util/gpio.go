@@ -9,13 +9,14 @@ import (
 )
 
 var PrinterIdToGpio = NewPrinterToGpioMap()
+var onRpi bool = rpi.Present() //global variable to track if we are running on the raspberry pi
 
 type PrinterToGpioMap struct {
 	Map       map[int]gpio.PinIO
 	populated bool
 }
 
-//constructor
+//constructor for GpioMap
 func NewPrinterToGpioMap() PrinterToGpioMap {
     return PrinterToGpioMap{
         Map:       make(map[int]gpio.PinIO),
@@ -89,7 +90,12 @@ func getPinFromPrinterId(printerId int) (gpio.PinIO, error) {
 	return value, nil
 }
 
+//Turn on the specified printer
 func TurnOnPrinter(printerId int) (bool, error) {
+
+	if !onRpi { //return if we aren't running on the RPI
+		return true, nil
+	}
 
 	pin, err := getPinFromPrinterId(printerId)
 	if err != nil {
@@ -103,7 +109,12 @@ func TurnOnPrinter(printerId int) (bool, error) {
 	return true, nil
 }
 
+//Turn off the specified printer
 func TurnOffPrinter(printerId int) (bool, error) {
+
+	if !onRpi { //return if we aren't running on the RPI
+		return true, nil
+	}
 
 	pin, err := getPinFromPrinterId(printerId)
 	if err != nil {
