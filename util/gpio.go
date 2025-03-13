@@ -2,13 +2,12 @@ package util
 
 import (
 	"fmt"
-	"sync"
 
 	"periph.io/x/conn/v3/gpio"
 	"periph.io/x/host/v3/rpi"
 )
 
-var PrinterIdToGpio = NewPrinterToGpioMap()
+var PrinterIdToGpio = NewPrinterToGpioMap() //global map struct for correlating printers to GPIO pins
 var onRpi bool = rpi.Present() //global variable to track if we are running on the raspberry pi
 
 type PrinterToGpioMap struct {
@@ -16,17 +15,12 @@ type PrinterToGpioMap struct {
 	populated bool
 }
 
-//constructor for GpioMap
+// constructor for GpioMap
 func NewPrinterToGpioMap() PrinterToGpioMap {
-    return PrinterToGpioMap{
-        Map:       make(map[int]gpio.PinIO),
-        populated: false,
-    }
-}
-
-type PinWithMutex struct {
-	Pin gpio.PinIO
-	Mutex sync.RWMutex
+	return PrinterToGpioMap{
+		Map:       make(map[int]gpio.PinIO),
+		populated: false,
+	}
 }
 
 func populateGpioMap() {
@@ -76,6 +70,7 @@ func populateGpioMap() {
 	PrinterIdToGpio.Map[28] = rpi.P1_40
 }
 
+//Given a printer, return the pin that it should be connected to
 func getPinFromPrinterId(printerId int) (gpio.PinIO, error) {
 
 	if !PrinterIdToGpio.populated {
