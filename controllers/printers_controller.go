@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"gin-api/models"
 	"gin-api/services"
 	"gin-api/util"
 	"log"
@@ -18,6 +19,26 @@ func GetPrinters(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, printers)
+}
+
+func AddPrinter(c *gin.Context) {
+	var req models.Printer
+	if err := c.BindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request format"})
+		return
+	}
+
+	success, err := services.AddPrinter(req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	if !success {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Printer with that ID already exists"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Printer added"})
 }
 
 func ReservePrinter(c *gin.Context) {
