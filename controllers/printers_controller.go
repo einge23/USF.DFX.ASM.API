@@ -34,11 +34,37 @@ func AddPrinter(c *gin.Context) {
 		return
 	}
 	if !success {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Printer with that ID already exists"})
+		c.JSON(http.StatusNotFound, gin.H{"error": "status not found"})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Printer added"})
+	c.JSON(http.StatusOK, true)
+}
+
+func UpdatePrinter(c *gin.Context) {
+
+	id := util.GetInfoFromPath(c, "printerID")
+	if id == -1 {
+		return
+	}
+
+	var req services.UpdatePrinterRequest
+	if err := c.BindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request format"})
+		return
+	}
+
+	success, err := services.UpdatePrinter(id, req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	if !success {
+		c.JSON(http.StatusNotFound, gin.H{"error": "status not found"})
+		return
+	}
+
+	c.JSON(http.StatusOK, true)
 }
 
 func ReservePrinter(c *gin.Context) {

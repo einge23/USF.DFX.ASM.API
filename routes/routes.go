@@ -56,6 +56,7 @@ func SetupRouter(r *gin.Engine) {
 				{
 					printers.POST("/create", controllers.AddPrinter)
 					printers.PUT("/setExecutive/:printerID", controllers.SetPrinterExecutive)
+					printers.PUT("/update/:printerID", controllers.UpdatePrinter)
 				}
 				settings := admin.Group("/settings")
 				{

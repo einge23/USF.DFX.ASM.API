@@ -21,7 +21,7 @@ func CreateUser(createUserRequest CreateUserRequest) (bool, error) {
 	if err != nil {
 		return false, fmt.Errorf("error parsing card data: %v", err)
 	}
-
+	
 	//check for existing user
 	var existingID int
 	querySQL := `SELECT id FROM users WHERE username = ?`

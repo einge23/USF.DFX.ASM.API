@@ -38,21 +38,71 @@ func GetPrinters() ([]models.Printer, error) {
 	return printers, nil
 }
 
-func AddPrinter(request models.Printer) {
+func AddPrinter(request models.Printer) (bool, error) {
+
 	var id int
 	row := database.DB.QueryRow("SELECT id FROM printers WHERE id = ?", request.Id)
 	err := row.Scan(&id)
 
+	//No row exists, proceed with add
 	if err == sql.ErrNoRows {
-		//No row exists, proceed with add
 		insertSQL := `INSERT INTO printers (id, name, color, rack, in_use, last_reserved_by, is_executive, is_egn_printer) values (?, ?, ?, ?, ?, ?, ?, ?)`
+		_, err = database.DB.Exec(insertSQL,
+						 request.Id,
+						 request.Name,
+						 request.Color,
+						 request.Rack, 
+						 request.In_Use, 
+						 nil, 
+						 request.Is_Executive, 
+						 request.Is_Egn_Printer)
+		if err != nil {
+			return false, fmt.Errorf("error inserting new printer to DB")
+		}
+		return true, nil
+
+	//some other error has happened
 	} else if err != nil {
-		//Some other error occurred
-		log.Fatal(err)
-	} else {
-		//Row exists
-		fmt.Printf("Row found with id: %d\n", id)
+		return false, err
 	}
+	//Row exists
+	return false, fmt.Errorf("printer with specified ID already exists")
+}
+
+type UpdatePrinterRequest struct {
+	Name 			string	`json:"name"`
+	Color 			string	`json:"color"`
+	Rack 			int		`json:"rack"`
+	IsExecutive 	bool	`json:"is_executive"`
+	IsEgnPrinter 	bool	`json:"is_egn_printer"`
+}
+
+func UpdatePrinter(id int, request UpdatePrinterRequest) (bool, error) {
+	
+	row := database.DB.QueryRow("SELECT id FROM printers WHERE id = ?", id)
+	err := row.Scan(&id)
+
+	//No row exists
+	if err == sql.ErrNoRows {
+		return false, fmt.Errorf("printer does not exist")
+
+	//some other error has happened
+	} else if err != nil {
+		return false, err
+	}
+	//printer exists
+	updateSQL := `UPDATE printers SET name = ?, color = ?, rack = ?, is_executive = ?, is_egn_printer = ? WHERE id = ?`
+	_, err = database.DB.Exec(updateSQL, 
+							 request.Name,
+							 request.Color,
+							 request.Rack,
+							 request.IsExecutive,
+							 request.IsEgnPrinter,
+							 id)
+	if err != nil {
+		return false, fmt.Errorf("error updating printer in DB")
+	}
+	return true, nil
 }
 
 type ReservePrinterRequest struct {
