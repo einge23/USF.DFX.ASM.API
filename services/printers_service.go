@@ -38,6 +38,23 @@ func GetPrinters() ([]models.Printer, error) {
 	return printers, nil
 }
 
+func AddPrinter(request models.Printer) {
+	var id int
+	row := database.DB.QueryRow("SELECT id FROM printers WHERE id = ?", request.Id)
+	err := row.Scan(&id)
+
+	if err == sql.ErrNoRows {
+		//No row exists, proceed with add
+		insertSQL := `INSERT INTO printers (id, name, color, rack, in_use, last_reserved_by, is_executive, is_egn_printer) values (?, ?, ?, ?, ?, ?, ?, ?)`
+	} else if err != nil {
+		//Some other error occurred
+		log.Fatal(err)
+	} else {
+		//Row exists
+		fmt.Printf("Row found with id: %d\n", id)
+	}
+}
+
 type ReservePrinterRequest struct {
 	PrinterId int `json:"printer_id"`
 	UserId    int `json:"user_id"`
