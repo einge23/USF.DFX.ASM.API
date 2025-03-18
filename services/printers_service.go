@@ -10,6 +10,7 @@ import (
 	"time"
 )
 
+//return all printers by rack, as serialized JSON
 func GetPrinters() ([]models.Printer, error) {
 	rows, err := database.DB.Query("SELECT id, name, color, rack, in_use, last_reserved_by, is_executive FROM printers order by rack asc")
 	if err != nil {
@@ -38,6 +39,7 @@ func GetPrinters() ([]models.Printer, error) {
 	return printers, nil
 }
 
+//Add printer to the db by ensuring that a printer of that ID doesn't exist. ID correlates to physical plug.
 func AddPrinter(request models.Printer) (bool, error) {
 
 	var id int
@@ -77,6 +79,7 @@ type UpdatePrinterRequest struct {
 	IsEgnPrinter 	bool	`json:"is_egn_printer"`
 }
 
+//change name, color, rack, is_executive, is_egn, of an existing printer
 func UpdatePrinter(id int, request UpdatePrinterRequest) (bool, error) {
 	
 	row := database.DB.QueryRow("SELECT id FROM printers WHERE id = ?", id)
