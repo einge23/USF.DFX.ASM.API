@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# this file must be set in the raspberry pi builtin crontab
+# sudo crontab -e to edit
+
+#establish db
 DB_FILE="../test.db"
 
 # Query to fetch the last run date
@@ -34,4 +38,4 @@ sqlite3 "$DB_FILE" "$UPDATE_QUERY"
 UPDATE_QUERY="UPDATE settings SET last_ran_date = '$CURRENT_DATE' WHERE name = 'default';"
 sqlite3 "$DB_FILE" "$UPDATE_QUERY"
 
-echo "Script completed and last_ran_date updated."
+echo "Weekly hours reset and last_ran_date updated."
