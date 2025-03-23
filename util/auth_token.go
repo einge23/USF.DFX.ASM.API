@@ -1,7 +1,10 @@
 package util
 
 import (
+	"database/sql"
 	"errors"
+	"fmt"
+	"gin-api/database"
 	"log"
 	"os"
 	"time"
@@ -28,11 +31,12 @@ func loadSecretKey() []byte {
 	return []byte(secretKey)
 }
 
-func GenerateTokenPair(userId int, isAdmin bool) (*TokenPair, error) {
+func GenerateTokenPair(userId int, isAdmin bool, isEgnLab bool) (*TokenPair, error) {
 	accessToken := jwt.New(jwt.SigningMethodHS256)
     accessClaims := accessToken.Claims.(jwt.MapClaims)
     accessClaims["userId"] = userId
     accessClaims["isAdmin"] = isAdmin
+    accessClaims["isEgnLab"] = isEgnLab
     accessClaims["exp"] = time.Now().Add(15 * time.Minute).Unix()
     accessClaims["type"] = "access"
 
@@ -40,6 +44,7 @@ func GenerateTokenPair(userId int, isAdmin bool) (*TokenPair, error) {
     refreshClaims := refreshToken.Claims.(jwt.MapClaims)
     refreshClaims["userId"] = userId
     refreshClaims["isAdmin"] = isAdmin
+    refreshClaims["isEgnLab"] = isEgnLab
     refreshClaims["exp"] = time.Now().Add(7 * 24 * time.Hour).Unix()
     refreshClaims["type"] = "refresh"
 
@@ -98,12 +103,26 @@ func RefreshAccessToken(refreshToken string) (string, error) {
 
     // Generate new access token
     userId := int(claims["userId"].(float64))
-    isAdmin := claims["isAdmin"].(bool)
+     // Extract userId from claims
+    
+     // Query the database to get latest user data
+     var isAdmin, isEgnLab bool
+     err = database.DB.QueryRow("SELECT admin, is_egn_lab FROM users WHERE id = ?", userId).Scan(
+         &isAdmin,
+         &isEgnLab,
+     )
+     if err != nil {
+         if err == sql.ErrNoRows {
+             return "", errors.New("user no longer exists")
+         }
+         return "", fmt.Errorf("database error: %v", err)
+     }
 
     newToken := jwt.New(jwt.SigningMethodHS256)
     newClaims := newToken.Claims.(jwt.MapClaims)
     newClaims["userId"] = userId
     newClaims["isAdmin"] = isAdmin
+    newClaims["isEgnLab"] = isEgnLab
     newClaims["exp"] = time.Now().Add(15 * time.Minute).Unix()
     newClaims["type"] = "access"
 

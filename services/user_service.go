@@ -13,6 +13,7 @@ type CreateUserRequest struct {
 	Scanner_Message string `json:"scanner_message"`
 	Trained         bool   `json:"trained"`
 	Admin           bool   `json:"admin"`
+	Egn_Lab         bool `json:"egn_lab"`
 }
 
 func CreateUser(createUserRequest CreateUserRequest) (bool, error) {
@@ -38,8 +39,8 @@ func CreateUser(createUserRequest CreateUserRequest) (bool, error) {
 	}
 
 	//add user
-	insertSQL := `INSERT INTO users (id, username, has_training, admin) VALUES (?, ?, ?, ?)`
-	_, err = database.DB.Exec(insertSQL, cardData.Id, cardData.Username, createUserRequest.Trained, createUserRequest.Admin)
+	insertSQL := `INSERT INTO users (id, username, has_training, admin, is_egn_lab) VALUES (?, ?, ?, ?, ?)`
+	_, err = database.DB.Exec(insertSQL, cardData.Id, cardData.Username, createUserRequest.Trained, createUserRequest.Admin, createUserRequest.Egn_Lab)
 	if err != nil {
 		return false, fmt.Errorf("could not add user: %v", err)
 	}

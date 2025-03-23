@@ -11,7 +11,15 @@ import (
 )
 
 func GetPrinters(c *gin.Context) {
-	printers, err := services.GetPrinters()
+	_, exists := c.Get("isEgnLab")
+    if !exists {
+        log.Printf("Error: No claims found in request context")
+        c.JSON(http.StatusUnauthorized, gin.H{"error": "Authentication required"})
+        return
+    }
+	isEgnLab := c.GetBool("isEgnLab")
+    
+    printers, err := services.GetPrinters(isEgnLab)
 	if err != nil {
 		log.Printf("Error in GetPrinters Service: %v", err)
 		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
