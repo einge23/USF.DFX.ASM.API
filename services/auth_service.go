@@ -47,7 +47,7 @@ func Login(loginRequest LoginRequest) (*models.UserData, *util.TokenPair, error)
         return nil, tokenPair, ErrorNotTrained
     }
 
-	token, err := util.GenerateTokenPair(userData.Id, userData.Admin)
+	token, err := util.GenerateTokenPair(userData.Id, userData.Admin, userData.Is_Egn_Lab)
 	if err != nil {
         return nil, tokenPair , fmt.Errorf("error generating token: %v", err)
     }
