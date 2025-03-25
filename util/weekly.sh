@@ -4,7 +4,7 @@
 # sudo crontab -e to edit
 
 #establish db
-DB_FILE="../test.db"
+DB_FILE="/home/dfxp/Desktop/AutomatedAccessControl/Repos/USF.DFX.ASM.API/test.db"
 
 # Query to fetch the last run date
 FETCH_DATE_QUERY="SELECT last_ran_date FROM settings WHERE name = 'default';"
