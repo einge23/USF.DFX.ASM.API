@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"gin-api/database"
+	"gin-api/recovery"
 	"gin-api/routes"
 	"gin-api/util"
 	"log"
@@ -26,6 +27,12 @@ func main() {
 
 	database.SetDB(db)
 	log.Println("Database connection established.")
+
+	//complete reservations that ended while the API was offline
+	_, err = recovery.CompleteMissedReservations()
+	if err != nil {
+		log.Printf("Failed to complete missed reservations: %v", err)
+	}
 
 	//Initialize hardware host
 	if state, err := host.Init(); err != nil {
@@ -59,4 +66,5 @@ func main() {
 	routes.SetupRouter(r)
 
 	r.Run(":3000")
+
 }

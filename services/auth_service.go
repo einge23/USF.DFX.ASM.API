@@ -54,4 +54,3 @@ func Login(loginRequest LoginRequest) (*models.UserData, *util.TokenPair, error)
 	
 	return &userData, token, nil
 }
-
