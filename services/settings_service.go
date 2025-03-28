@@ -7,8 +7,8 @@ import (
 	"gin-api/util"
 )
 
-//get the settings from the global obj if its up to date, and if it isnt, update it
-//by pulling the info out of the db
+// get the settings from the global obj if its up to date, and if it isnt, update it
+// by pulling the info out of the db
 func GetSettings() (models.Settings, error) {
 
 	var err error = nil          //no error by default
@@ -18,9 +18,10 @@ func GetSettings() (models.Settings, error) {
 	return util.Settings, err //return error if it exists, still nil if no error
 }
 
-//same as models.Settings but no up to date bool
+// same as models.Settings but no up to date bool
 type SetSettingsRequest struct {
-	TimeSettings models.TimeSettings `json:"time_settings"`
+	TimeSettings          models.TimeSettings `json:"time_settings"`
+	MaxActiveReservations *int                `json:"max_active_reservations"`
 }
 
 func SetSettings(request SetSettingsRequest) error {
@@ -33,6 +34,11 @@ func SetSettings(request SetSettingsRequest) error {
 	util.Settings.TimeSettings.DayStart = request.TimeSettings.DayStart
 	util.Settings.TimeSettings.NightStart = request.TimeSettings.NightStart
 	util.Settings.TimeSettings.DefaultUserWeeklyHours = request.TimeSettings.DefaultUserWeeklyHours
+	util.Settings.MaxActiveReservations = *request.MaxActiveReservations
+
+	//if request.MaxActiveReservations != nil {
+	//	util.SetActiveReservations(*request.MaxActiveReservations)
+	//}
 
 	//if somehow util is not up to date yet, set it to true
 	util.Settings.UpToDate = true
