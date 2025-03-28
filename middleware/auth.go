@@ -2,7 +2,6 @@ package middleware
 
 import (
 	"gin-api/util"
-	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -14,16 +13,6 @@ import (
 func AuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
-
-		// ✅ TEMP BYPASS FOR TESTING
-		if authHeader == "Bearer TEST_ADMIN" {
-			log.Println(">>> TEST_ADMIN bypass triggered")
-			c.Set("userId", 1)
-			c.Set("isAdmin", true)
-			c.Set("isEgnLab", false) // or true if needed
-			c.Next()
-			return
-		}
 
 		if authHeader == "" {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization header required"})
