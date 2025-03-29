@@ -3,12 +3,13 @@ package controllers
 import (
 	"gin-api/models"
 	"gin-api/services"
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
 
-//Get the settings by calling the service
+// Get the settings by calling the service
 func GetSettings(c *gin.Context) {
 	var settings models.Settings
 	settings, err := services.GetSettings()
@@ -19,8 +20,11 @@ func GetSettings(c *gin.Context) {
 
 	c.JSON(http.StatusOK, settings)
 }
-//Set the settings by calling the service and passing it the request body
+
+// Set the settings by calling the service and passing it the request body
 func SetSettings(c *gin.Context) {
+
+	log.Println(">>> SetSettings called")
 
 	var req services.SetSettingsRequest
 	if err := c.BindJSON(&req); err != nil {
@@ -28,11 +32,14 @@ func SetSettings(c *gin.Context) {
 		return
 	}
 
+	log.Println(">>> JSON succesfully parsed", req)
+
 	err := services.SetSettings(req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"Internal server error": err.Error()})
 		return
 	}
 
+	log.Println(">>> SetSettings completed succesfully")
 	c.JSON(http.StatusOK, true)
 }
