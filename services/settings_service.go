@@ -36,10 +36,6 @@ func SetSettings(request SetSettingsRequest) error {
 	util.Settings.TimeSettings.DefaultUserWeeklyHours = request.TimeSettings.DefaultUserWeeklyHours
 	util.Settings.MaxActiveReservations = *request.MaxActiveReservations
 
-	//if request.MaxActiveReservations != nil {
-	//	util.SetActiveReservations(*request.MaxActiveReservations)
-	//}
-
 	//if somehow util is not up to date yet, set it to true
 	util.Settings.UpToDate = true
 

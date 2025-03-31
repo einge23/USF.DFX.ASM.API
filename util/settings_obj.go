@@ -33,18 +33,18 @@ func ImportSettingsFromDB() error {
 	return nil
 }
 
-var ( // Set
-	maxActiveReservations = 2
+var ( // Set a global variable for the max number of active reservations
+	maxActiveReservations = 2 // Default is 2
 	limitMutex            sync.RWMutex
 )
 
-func GetMaxActiveReservations() int {
+func GetMaxActiveReservations() int { // Safely return the current limit of active reservations per user
 	limitMutex.RLock()
 	defer limitMutex.RUnlock()
 	return maxActiveReservations
 }
 
-func SetActiveReservations(newLimit int) {
+func SetActiveReservations(newLimit int) { // Safely update the global limit of active printer reservations
 	limitMutex.Lock()
 	defer limitMutex.Unlock()
 	maxActiveReservations = newLimit
