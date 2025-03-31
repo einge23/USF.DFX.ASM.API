@@ -4,10 +4,11 @@ import (
 	"fmt"
 	"gin-api/database"
 	"gin-api/models"
+	"sync"
 )
 
-//Global variable referenced by other packages to get/set the settings. Should be
-//faster than fetching from db every time
+// Global variable referenced by other packages to get/set the settings. Should be
+// faster than fetching from db every time
 var Settings models.Settings
 
 // Gets the settings from the database and stores them in the 'Settings' global obj
@@ -30,4 +31,21 @@ func ImportSettingsFromDB() error {
 
 	Settings.UpToDate = true
 	return nil
+}
+
+var ( // Set a global variable for the max number of active reservations
+	maxActiveReservations = 2 // Default is 2
+	limitMutex            sync.RWMutex
+)
+
+func GetMaxActiveReservations() int { // Safely return the current limit of active reservations per user
+	limitMutex.RLock()
+	defer limitMutex.RUnlock()
+	return maxActiveReservations
+}
+
+func SetActiveReservations(newLimit int) { // Safely update the global limit of active printer reservations
+	limitMutex.Lock()
+	defer limitMutex.Unlock()
+	maxActiveReservations = newLimit
 }

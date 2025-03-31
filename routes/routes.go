@@ -65,6 +65,7 @@ func SetupRouter(r *gin.Engine) {
 					settings.PUT("/setSettings", controllers.SetSettings)
 				}
 			}
+
 		}
 	}
 }
