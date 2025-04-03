@@ -274,7 +274,7 @@ func ReservePrinter(printerId int, userId int, timeMins int) (bool, error) {
 
     go func() {
         <-timer.C
-        completeReservation(printerId, int(reservationId))
+        CompleteReservation(printerId, int(reservationId))
     }()
 
     return true, nil
@@ -312,7 +312,7 @@ func undoReservation(printerId, reservationId, userId, timeMins, originalWeeklyM
 }
 
 // turn off the printer, set the relevant printer as not in use, set the reservation to no longer be active
-func completeReservation(printerId, reservationId int) {
+func CompleteReservation(printerId, reservationId int) {
 
 	//Turn off the printer
 	_, err := util.TurnOffPrinter(printerId)
