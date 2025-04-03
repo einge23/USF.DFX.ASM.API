@@ -3,12 +3,14 @@ package controllers
 import (
 	"gin-api/models"
 	"gin-api/services"
+	"gin-api/util"
 	"net/http"
+	"path/filepath"
 
 	"github.com/gin-gonic/gin"
 )
 
-//Get the settings by calling the service
+// Get the settings by calling the service
 func GetSettings(c *gin.Context) {
 	var settings models.Settings
 	settings, err := services.GetSettings()
@@ -19,7 +21,8 @@ func GetSettings(c *gin.Context) {
 
 	c.JSON(http.StatusOK, settings)
 }
-//Set the settings by calling the service and passing it the request body
+
+// Set the settings by calling the service and passing it the request body
 func SetSettings(c *gin.Context) {
 
 	var req services.SetSettingsRequest
@@ -35,4 +38,27 @@ func SetSettings(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, true)
+}
+
+func ExportDBToUSB(c *gin.Context) {
+	usbPath, err := util.FindUSBDrive()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "No USB drive found"})
+		return
+	}
+
+	// Create full CSV path on the USB
+	outputPath := filepath.Join(usbPath, "reservations_export.csv")
+
+	// Export to that path
+	err = util.ExportTableToCSV("test.db", "reservations", outputPath)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Exported to USB",
+		"path":    outputPath,
+	})
 }

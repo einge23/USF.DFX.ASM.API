@@ -63,6 +63,7 @@ func SetupRouter(r *gin.Engine) {
 				settings := admin.Group("/settings")
 				{
 					settings.PUT("/setSettings", controllers.SetSettings)
+					settings.GET("/export-to-usb", controllers.ExportDBToUSB) // Admin only feature to export CSV file to USB
 				}
 			}
 		}
