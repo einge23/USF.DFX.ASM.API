@@ -31,6 +31,9 @@ func SetupRouter(r *gin.Engine) {
 				users.GET("/activeReservations/:userID",
 					controllers.GetActiveUserReservations,
 				)
+				users.PUT("/cancelActiveReservation",
+					controllers.CancelActiveReservation,
+				)
 			}
 			settings := protected.Group("/settings")
 			{
