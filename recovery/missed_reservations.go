@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"gin-api/database"
 	"gin-api/services"
+	"gin-api/util"
 	"time"
 )
 
@@ -44,10 +45,11 @@ func CompleteMissedReservations() (bool, error) {
 	}
 	rows.Close()
 
-	//if a reservation is not marked as complete (is_active) but its end time has passed, it was missed in downtime. Complete it.
 	for _, r := range reservations {
-		if r.timeComplete.Before(time.Now()) {
+		if r.timeComplete.Before(time.Now()) { //if reservation still is_active but its end time has passed, it was missed in downtime. Complete it.
 			services.CompleteReservation(r.printerId, r.id)
+		} else { //if end time has not passed yet, turn the printer back on.
+			util.TurnOnPrinter(r.printerId)
 		}
 	}
 
