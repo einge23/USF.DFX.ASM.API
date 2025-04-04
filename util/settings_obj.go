@@ -6,11 +6,11 @@ import (
 	"gin-api/models"
 )
 
-//Global variable referenced by other packages to get/set the settings. 
-//faster than fetching from db every time
+// Global variable referenced by other packages to get/set the settings. Should be
+// faster than fetching from db every time
 var Settings models.Settings
 
-// Gets the settings from the database and stores them in the Settings global obj
+// Gets the settings from the database and stores them in the 'Settings' global obj
 func ImportSettingsFromDB() error {
 	querySQL := `SELECT day_max_print_hours_week, night_max_print_hours_week,
 						day_max_print_hours_weekend, night_max_print_hours_weekend,
