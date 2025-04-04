@@ -9,10 +9,10 @@ import (
 )
 
 func FindUSBDrive() (string, error) {
-	switch runtime.GOOS {
-	case "windows":
+	switch onRpi {
+	case false:
 		return scanWindowsDrives()
-	case "linux":
+	case true:
 		return scanLinuxDrives()
 	default:
 		return "", fmt.Errorf("unsupported OS: %s", runtime.GOOS)
@@ -30,11 +30,11 @@ func scanWindowsDrives() (string, error) {
 }
 
 func scanLinuxDrives() (string, error) {
-	base := "/media/pi" // Depends on the Raspberry Pi
+	base := "/dfxp/home/Desktop/AutomaticAccessControl/cronLogs" // Depends on the Raspberry Pi
 
 	entries, err := os.ReadDir(base)
 	if err != nil {
-		return "", fmt.Errorf("failed to read /media: %v", err)
+		return "", fmt.Errorf("failed to read /dfxp...: %v", err)
 	}
 
 	for _, entry := range entries {
