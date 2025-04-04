@@ -30,7 +30,7 @@ func scanWindowsDrives() (string, error) {
 }
 
 func scanLinuxDrives() (string, error) {
-	base := "/media/pi" // or "/media/<your-username>" depending on your Pi config
+	base := "/media/pi" // Depends on the Raspberry Pi
 
 	entries, err := os.ReadDir(base)
 	if err != nil {
