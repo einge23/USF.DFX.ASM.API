@@ -1,10 +1,12 @@
 package models
 
+//master settings struct
 type Settings struct {
 	TimeSettings TimeSettings `json:"time_settings"`
 	UpToDate bool `json:"up_to_date"`
 }
 
+//time settings struct
 type TimeSettings struct {
 	WeekdayPrintTime PrintTime `json:"weekday_print_time"`
 	WeekendPrintTime PrintTime `json:"weekend_print_time"`
@@ -14,6 +16,7 @@ type TimeSettings struct {
 
 }
 
+//substruct for time settings
 type PrintTime struct {
 	DayMaxPrintHours int `json:"day_max_print_hours"`
 	NightMaxPrintHours int `json:"night_max_print_hours"`

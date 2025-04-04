@@ -7,8 +7,8 @@ import (
 	"gin-api/util"
 )
 
-//get the settings from the global obj if its up to date, and if it isnt, update it
-//by pulling the info out of the db
+//get the settings from the global obj if its up to date.
+//if it isnt up to date, update it by pulling the info out of the db
 func GetSettings() (models.Settings, error) {
 
 	var err error = nil          //no error by default
@@ -23,6 +23,7 @@ type SetSettingsRequest struct {
 	TimeSettings models.TimeSettings `json:"time_settings"`
 }
 
+//directly set all time settings values both in the global obj and the database to avoid desync
 func SetSettings(request SetSettingsRequest) error {
 
 	//update global obj

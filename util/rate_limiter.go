@@ -8,6 +8,7 @@ import (
 	"github.com/ulule/limiter/v3/drivers/store/memory"
 )
 
+//returns a rate limiter as a gin Handler Function
 func GetRateLimiter() gin.HandlerFunc {
     rate := limiter.Rate{
         Period: 1 * time.Minute,

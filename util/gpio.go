@@ -15,7 +15,7 @@ type PrinterToGpioMap struct {
 	populated bool
 }
 
-// constructor for GpioMap
+//constructor for PrinterToGpioMap
 func NewPrinterToGpioMap() PrinterToGpioMap {
 	return PrinterToGpioMap{
 		Map:       make(map[int]gpio.PinIO),
@@ -23,6 +23,7 @@ func NewPrinterToGpioMap() PrinterToGpioMap {
 	}
 }
 
+//populates the PrinterToGpioMap object. Maps printer slots to Raspberry Pi GPIO pins
 func populateGpioMap() {
 
 	//maximum of 28 supported printers due to available GPIO pins
@@ -92,11 +93,11 @@ func TurnOnPrinter(printerId int) (bool, error) {
 		return true, nil
 	}
 
-	pin, err := getPinFromPrinterId(printerId)
+	pin, err := getPinFromPrinterId(printerId) //get the pin
 	if err != nil {
 		return false, fmt.Errorf("error getting pin from printer ID: %v", err)
 	}
-	err = pin.Out(gpio.High)
+	err = pin.Out(gpio.High) //write that pin to HIGH
 	if err != nil {
 		return false, fmt.Errorf("error writing HIGH to GPIO pin: %v", err)
 	}
@@ -111,11 +112,11 @@ func TurnOffPrinter(printerId int) (bool, error) {
 		return true, nil
 	}
 
-	pin, err := getPinFromPrinterId(printerId)
+	pin, err := getPinFromPrinterId(printerId) //get the pin
 	if err != nil {
 		return false, fmt.Errorf("error getting pin from printer ID: %v", err)
 	}
-	err = pin.Out(gpio.Low)
+	err = pin.Out(gpio.Low) //write that pin to LOW
 	if err != nil {
 		return false, fmt.Errorf("error writing LOW to GPIO pin: %v", err)
 	}

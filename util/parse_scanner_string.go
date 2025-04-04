@@ -11,6 +11,7 @@ type ParsedCardData struct {
 	Username string
 }
 
+//return user Id (int) and Username (string) from the raw scanner output
 func ParseScannerString(scannerString string) (*ParsedCardData, error) {
     if (scannerString == "" || len(scannerString) >= 256) {
         return nil, fmt.Errorf("invalid scanner string format")

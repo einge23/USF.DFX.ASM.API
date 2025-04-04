@@ -8,6 +8,9 @@ import (
 	"time"
 )
 
+//runs on startup (in main.go). Finds reservations that ended while the API was not running,
+//and completes those reservations formally. Finds reservations that haven't ended while the
+//API was not running, and re-enables their printer's respective GPIO pin.
 func CompleteMissedReservations() (bool, error) {
 
 	//pull id, printer_id, time_complete of all active reservations

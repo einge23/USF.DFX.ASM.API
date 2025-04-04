@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+//handles the CreateUser service. Binds JSON to expected format and returns any errors encountered.
 func CreateUser(c *gin.Context) {
 	var req services.CreateUserRequest
 	if err := c.BindJSON(&req); err != nil {
@@ -29,6 +30,8 @@ func CreateUser(c *gin.Context) {
 	c.JSON(http.StatusOK, true)
 }
 
+//handles the SetUserTrained service. Binds JSON to expected format and returns any errors encountered.
+//requires that the userId is given at the end of the route.
 func SetUserTrained(c *gin.Context) {
 
 	id := util.GetInfoFromPath(c, "userID")
@@ -45,6 +48,8 @@ func SetUserTrained(c *gin.Context) {
 	c.JSON(http.StatusOK, true)
 }
 
+//handles the GetUserReservations service. Binds JSON to expected format and returns any errors encountered.
+//requires that the userId is given at the end of the route.
 func GetUserReservations(c *gin.Context) {
 	id := util.GetInfoFromPath(c, "userID")
 	if id == -1 {
@@ -60,6 +65,8 @@ func GetUserReservations(c *gin.Context) {
 	c.JSON(http.StatusOK, reservations)
 }
 
+//handles the GetActiveUerReservations service. Binds JSON to expected format and returns any errors encountered.
+//requires that the userId is given at the end of the route.
 func GetActiveUserReservations(c *gin.Context) {
 	id := util.GetInfoFromPath(c, "userID")
 	if id == -1 {
@@ -84,6 +91,7 @@ type GetUserRequest struct {
 	ScannerMessage string `json:"scanner_message" binding:"required"`
 }
 
+//handles the GetUserById service. Binds JSON to expected format and returns any errors encountered.
 func GetUserById(c *gin.Context) {
 	var req GetUserRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -106,6 +114,8 @@ func GetUserById(c *gin.Context) {
 	c.JSON(http.StatusOK, userData)
 }
 
+//handles the SetUserExecutiveAccess service. Binds JSON to expected format and returns any errors encountered.
+//requires that the userId is given at the end of the route.
 func SetUserExecutiveAccess(c *gin.Context) {
 
 	id := util.GetInfoFromPath(c, "userID")
@@ -122,6 +132,8 @@ func SetUserExecutiveAccess(c *gin.Context) {
 	c.JSON(http.StatusOK, true)
 }
 
+//handles the AddUserWeeklyMinutes service. Binds JSON to expected format and returns any errors encountered.
+//requires that the userId is given at the end of the route.
 func AddUserWeeklyMinutes(c *gin.Context) {
 
 	id := util.GetInfoFromPath(c, "userID")
@@ -144,6 +156,8 @@ func AddUserWeeklyMinutes(c *gin.Context) {
 	c.JSON(http.StatusOK, true)
 }
 
+//handles the SetUserBanTime service. Binds JSON to expected format and returns any errors encountered.
+//requires that the userId is given at the end of the route.
 func SetUserBanTime(c *gin.Context) {
 
 	id := util.GetInfoFromPath(c, "userID")

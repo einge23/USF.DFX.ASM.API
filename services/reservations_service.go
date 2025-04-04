@@ -8,6 +8,7 @@ import (
 	"time"
 )
 
+//returns all active reservations
 func GetActiveReservations() ([]models.ReservationDTO, error) {
 	rows, err := database.DB.Query("SELECT id, printerId, time_reserved, time_complete, userId, is_active, is_egn_reservation FROM reservations WHERE is_active = 1")
 	if err != nil {

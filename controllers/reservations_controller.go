@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+//handles the GetActiveReservations service. Binds JSON to expected format and returns any errors encountered.
 func GetActiveReservations(c *gin.Context) {
 	reservations, err := services.GetActiveReservations()
 	if err != nil {
@@ -21,6 +22,7 @@ func GetActiveReservations(c *gin.Context) {
 	c.JSON(200, reservations)
 }
 
+//handles the CancelActiveReservation service. Binds JSON to expected format and returns any errors encountered.
 func CancelActiveReservation(c *gin.Context) {
 	var req services.CancelActiveReservationRequest
 	if err := c.BindJSON(&req); err != nil {

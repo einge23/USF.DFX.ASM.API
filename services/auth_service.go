@@ -13,6 +13,7 @@ type LoginRequest struct {
 	Scanner_Message string `json:"scanner_message"`
 }
 
+//define reusable auth errors
 var (
 	ErrorUserNotFound = errors.New("user not found")
 	ErrorNotTrained   = errors.New("user not trained")
