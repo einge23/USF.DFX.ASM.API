@@ -10,6 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+//handles the GetPrinters service. Binds JSON to expected format and returns any errors encountered.
 func GetPrinters(c *gin.Context) {
 	_, exists := c.Get("isEgnLab")
 	if !exists {
@@ -29,6 +30,7 @@ func GetPrinters(c *gin.Context) {
 	c.JSON(http.StatusOK, printers)
 }
 
+//handles the AddPrinter service. Binds JSON to expected format and returns any errors encountered.
 func AddPrinter(c *gin.Context) {
 	var req models.Printer
 	if err := c.BindJSON(&req); err != nil {
@@ -49,6 +51,8 @@ func AddPrinter(c *gin.Context) {
 	c.JSON(http.StatusOK, true)
 }
 
+//handles the UpdatePrinter service. Binds JSON to expected format and returns any errors encountered.
+//requires that the printerId is given at the end of the route.
 func UpdatePrinter(c *gin.Context) {
 
 	id := util.GetInfoFromPath(c, "printerID")
@@ -75,6 +79,7 @@ func UpdatePrinter(c *gin.Context) {
 	c.JSON(http.StatusOK, true)
 }
 
+//handles the ReservePrinter service. Binds JSON to expected format and returns any errors encountered.
 func ReservePrinter(c *gin.Context) {
 	var req services.ReservePrinterRequest
 	if err := c.BindJSON(&req); err != nil {
@@ -96,6 +101,8 @@ func ReservePrinter(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Printer status updated"})
 }
 
+//handles the UpdatePrinter service. Binds JSON to expected format and returns any errors encountered.
+//requires that the printerId is given at the end of the route.
 func SetPrinterExecutive(c *gin.Context) {
 
 	id := util.GetInfoFromPath(c, "printerID")

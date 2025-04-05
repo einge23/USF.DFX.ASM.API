@@ -13,6 +13,7 @@ import (
 	"github.com/joho/godotenv"
 )
 
+//define reusable token errors
 var (
 	ErrExpiredToken = errors.New("token has expired")
 	ErrInvalidToken = errors.New("invalid token")
@@ -23,6 +24,7 @@ type TokenPair struct {
 	RefreshToken string
 }
 
+//loads the local secret key from .env which is required to sign tokens and use API in general
 func loadSecretKey() []byte {
 	err := godotenv.Load(".env")
 	if err != nil {
@@ -32,13 +34,14 @@ func loadSecretKey() []byte {
 	return []byte(secretKey)
 }
 
+//create a token pair based on the user id and admin status
 func GenerateTokenPair(userId int, isAdmin bool, isEgnLab bool) (*TokenPair, error) {
 	accessToken := jwt.New(jwt.SigningMethodHS256)
 	accessClaims := accessToken.Claims.(jwt.MapClaims)
 	accessClaims["userId"] = userId
 	accessClaims["isAdmin"] = isAdmin
 	accessClaims["isEgnLab"] = isEgnLab
-	accessClaims["exp"] = time.Now().Add(15 * time.Minute).Unix()
+	accessClaims["exp"] = time.Now().Add(15 * time.Minute).Unix() //expires after 15 minutes
 	accessClaims["type"] = "access"
 
 	refreshToken := jwt.New(jwt.SigningMethodHS256)
@@ -46,16 +49,19 @@ func GenerateTokenPair(userId int, isAdmin bool, isEgnLab bool) (*TokenPair, err
 	refreshClaims["userId"] = userId
 	refreshClaims["isAdmin"] = isAdmin
 	refreshClaims["isEgnLab"] = isEgnLab
-	refreshClaims["exp"] = time.Now().Add(7 * 24 * time.Hour).Unix()
+	refreshClaims["exp"] = time.Now().Add(7 * 24 * time.Hour).Unix() //expires after one week
 	refreshClaims["type"] = "refresh"
 
+	//get jwt Secret Key from .env
 	jwtSecret := loadSecretKey()
 
+	//sign access token
 	accessTokenString, err := accessToken.SignedString(jwtSecret)
 	if err != nil {
 		return nil, err
 	}
 
+	//sign refresh token
 	refreshTokenString, err := refreshToken.SignedString(jwtSecret)
 	if err != nil {
 		return nil, err

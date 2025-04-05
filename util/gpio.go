@@ -8,14 +8,14 @@ import (
 )
 
 var PrinterIdToGpio = NewPrinterToGpioMap() //global map struct for correlating printers to GPIO pins
-var onRpi bool = rpi.Present() //global variable to track if we are running on the raspberry pi
+var onRpi bool = rpi.Present()              //global variable to track if we are running on the raspberry pi
 
 type PrinterToGpioMap struct {
 	Map       map[int]gpio.PinIO
 	populated bool
 }
 
-// constructor for GpioMap
+//constructor for PrinterToGpioMap
 func NewPrinterToGpioMap() PrinterToGpioMap {
 	return PrinterToGpioMap{
 		Map:       make(map[int]gpio.PinIO),
@@ -23,6 +23,7 @@ func NewPrinterToGpioMap() PrinterToGpioMap {
 	}
 }
 
+//populates the PrinterToGpioMap object. Maps printer slots to Raspberry Pi GPIO pins
 func populateGpioMap() {
 
 	//maximum of 28 supported printers due to available GPIO pins
@@ -70,7 +71,7 @@ func populateGpioMap() {
 	PrinterIdToGpio.Map[28] = rpi.P1_40
 }
 
-//Given a printer, return the pin that it should be connected to
+// Given a printer, return the pin that it should be connected to
 func getPinFromPrinterId(printerId int) (gpio.PinIO, error) {
 
 	if !PrinterIdToGpio.populated {
@@ -85,39 +86,39 @@ func getPinFromPrinterId(printerId int) (gpio.PinIO, error) {
 	return value, nil
 }
 
-//Turn on the specified printer
+// Turn on the printer with the specified ID.
 func TurnOnPrinter(printerId int) (bool, error) {
 
 	if !onRpi { //return if we aren't running on the RPI
 		return true, nil
 	}
 
-	pin, err := getPinFromPrinterId(printerId)
+	pin, err := getPinFromPrinterId(printerId) //get the pin
 	if err != nil {
-		return false, err
+		return false, fmt.Errorf("error getting pin from printer ID: %v", err)
 	}
-	err = pin.Out(gpio.High)
+	err = pin.Out(gpio.High) //write that pin to HIGH
 	if err != nil {
-		return false, fmt.Errorf("could not write HIGH to GPIO pin")
+		return false, fmt.Errorf("error writing HIGH to GPIO pin: %v", err)
 	}
 
 	return true, nil
 }
 
-//Turn off the specified printer
+// Turn off the printer with the specified ID.
 func TurnOffPrinter(printerId int) (bool, error) {
 
 	if !onRpi { //return if we aren't running on the RPI
 		return true, nil
 	}
 
-	pin, err := getPinFromPrinterId(printerId)
+	pin, err := getPinFromPrinterId(printerId) //get the pin
 	if err != nil {
-		return false, err
+		return false, fmt.Errorf("error getting pin from printer ID: %v", err)
 	}
-	err = pin.Out(gpio.Low)
+	err = pin.Out(gpio.Low) //write that pin to LOW
 	if err != nil {
-		return false, fmt.Errorf("could not write LOW to GPIO pin")
+		return false, fmt.Errorf("error writing LOW to GPIO pin: %v", err)
 	}
 
 	return true, nil

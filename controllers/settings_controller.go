@@ -8,7 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// Get the settings by calling the service
+// handles the GetSettings service. Binds JSON to expected format and returns any errors encountered.
 func GetSettings(c *gin.Context) {
 	var settings models.Settings
 	settings, err := services.GetSettings()
@@ -20,7 +20,7 @@ func GetSettings(c *gin.Context) {
 	c.JSON(http.StatusOK, settings)
 }
 
-// Set the settings by calling the service and passing it the request body
+// handles the SetSettings service. Binds JSON to expected format and returns any errors encountered.
 func SetSettings(c *gin.Context) {
 	var req services.SetSettingsRequest
 	if err := c.BindJSON(&req); err != nil {

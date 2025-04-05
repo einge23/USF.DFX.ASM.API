@@ -43,7 +43,7 @@ func GetPrinters(isEgnLab bool) ([]models.Printer, error) {
 	return printers, nil
 }
 
-// Add printer to the db by ensuring that a printer of that ID doesn't exist. ID correlates to physical plug.
+// given a printer object, add a printer with those attributes. ID correlates to physical plug.
 func AddPrinter(request models.Printer) (bool, error) {
 
 	var id int
@@ -63,7 +63,7 @@ func AddPrinter(request models.Printer) (bool, error) {
 			request.Is_Executive,
 			request.Is_Egn_Printer)
 		if err != nil {
-			return false, fmt.Errorf("error inserting new printer to DB")
+			return false, fmt.Errorf("error inserting new printer to DB: %v", err)
 		}
 		return true, nil
 
@@ -83,7 +83,8 @@ type UpdatePrinterRequest struct {
 	IsEgnPrinter bool   `json:"is_egn_printer"`
 }
 
-// change name, color, rack, is_executive, is_egn, of an existing printer
+// given printer id and name, color, rack, is_executive, is_egn, change the values of that printer
+// to match the attributes passed in.
 func UpdatePrinter(id int, request UpdatePrinterRequest) (bool, error) {
 
 	row := database.DB.QueryRow("SELECT id FROM printers WHERE id = ?", id)
@@ -107,7 +108,7 @@ func UpdatePrinter(id int, request UpdatePrinterRequest) (bool, error) {
 		request.IsEgnPrinter,
 		id)
 	if err != nil {
-		return false, fmt.Errorf("error updating printer in DB")
+		return false, fmt.Errorf("error updating printer in DB: %v", err)
 	}
 	return true, nil
 }
@@ -124,6 +125,9 @@ var (
 	}
 )
 
+// given a printerId, userId, and time in minutes, reserve that printer for the user
+// and for that many minutes. Also add a timed event to complete the reservation after
+// the time in minutes has passed.
 func ReservePrinter(printerId int, userId int, timeMins int) (bool, error) {
 	var user models.UserData
 	if err := database.DB.QueryRow("SELECT username FROM users WHERE id = ?", userId).Scan(
@@ -252,7 +256,7 @@ func ReservePrinter(printerId int, userId int, timeMins int) (bool, error) {
 	if err != nil {
 		// Transaction was successful but printer failed to turn on
 		// We should try to undo our changes
-		undoErr := undoReservation(printerId, int(reservationId), userId, timeMins, currentWeeklyMinutes)
+		undoErr := undoReservation(printerId, int(reservationId), userId, currentWeeklyMinutes)
 		if undoErr != nil {
 			log.Printf("failed to undo reservation after printer turn on error: %v", undoErr)
 		}
@@ -276,14 +280,14 @@ func ReservePrinter(printerId int, userId int, timeMins int) (bool, error) {
 
 	go func() {
 		<-timer.C
-		completeReservation(printerId, int(reservationId))
+		CompleteReservation(printerId, int(reservationId))
 	}()
 
 	return true, nil
 }
 
 // Helper function to undo a reservation if printer fails to turn on
-func undoReservation(printerId, reservationId, userId, timeMins, originalWeeklyMinutes int) error {
+func undoReservation(printerId, reservationId, userId, originalWeeklyMinutes int) error {
 	tx, err := database.DB.Begin()
 	if err != nil {
 		return fmt.Errorf("failed to begin undo transaction: %v", err)
@@ -314,7 +318,7 @@ func undoReservation(printerId, reservationId, userId, timeMins, originalWeeklyM
 }
 
 // turn off the printer, set the relevant printer as not in use, set the reservation to no longer be active
-func completeReservation(printerId, reservationId int) {
+func CompleteReservation(printerId, reservationId int) {
 
 	//Turn off the printer
 	_, err := util.TurnOffPrinter(printerId)
@@ -322,6 +326,7 @@ func completeReservation(printerId, reservationId int) {
 		log.Printf("failed to turn off printer: %v", err)
 	}
 
+	//Set as not in_use
 	_, err = database.DB.Exec(
 		"UPDATE printers SET in_use = FALSE WHERE id = ?",
 		printerId,
@@ -329,7 +334,7 @@ func completeReservation(printerId, reservationId int) {
 	if err != nil {
 		log.Printf("failed to update printer: %v", err)
 	}
-
+	//Set the reservation as inactive
 	_, err = database.DB.Exec(
 		"UPDATE reservations SET is_active = FALSE WHERE id = ?",
 		reservationId,
@@ -343,6 +348,7 @@ func completeReservation(printerId, reservationId int) {
 	manager.Mutex.Unlock()
 }
 
+// Given a printerId, toggle its is_executive bool in the printers table
 func SetPrinterExecutive(id int) error {
 
 	var currentExecutiveness bool

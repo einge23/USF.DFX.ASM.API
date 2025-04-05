@@ -16,6 +16,7 @@ type CreateUserRequest struct {
 	Egn_Lab         bool `json:"egn_lab"`
 }
 
+//Given a card scanner raw input, trained bool, and admin bool, create a user and add it to user table
 func CreateUser(createUserRequest CreateUserRequest) (bool, error) {
 
 	cardData, err := util.ParseScannerString(createUserRequest.Scanner_Message)
@@ -47,6 +48,7 @@ func CreateUser(createUserRequest CreateUserRequest) (bool, error) {
 	return true, nil
 }
 
+//Given a userId, toggle that user's has_training bool in the users table
 func SetUserTrained(userId int) error {
 
 	//get trained status for the user from db
@@ -70,6 +72,7 @@ func SetUserTrained(userId int) error {
 	return nil
 }
 
+//given a userId, return all reservation info of that user. Returns both active and inactive reservations.
 func GetUserReservations(userId int) ([]models.ReservationDTO, error) {
 	var reservations []models.ReservationDTO
 	querySQL := `SELECT id, userId, time_reserved, time_complete, printerid, is_active, is_egn_reservation FROM reservations WHERE userId = ? ORDER BY time_reserved DESC`
@@ -79,17 +82,21 @@ func GetUserReservations(userId int) ([]models.ReservationDTO, error) {
 	}
 	defer rows.Close()
 
-	for rows.Next() {
-		var reservation models.ReservationDTO
+	for rows.Next() { //for all returns rows
+		var reservation models.ReservationDTO //create a reservation object
+		//scan in all reservation info
 		err := rows.Scan(&reservation.Id, &reservation.UserId, &reservation.Time_Reserved, &reservation.Time_Complete, &reservation.PrinterId, &reservation.Is_Active, &reservation.Is_Egn_Reservation)
 		if err != nil {
 			return nil, fmt.Errorf("error scanning reservation: %v", err)
 		}
+		//add the reservation object to a list
 		reservations = append(reservations, reservation)
 	}
+	//return the whole list of reservations
 	return reservations, nil
 }
 
+//given a userId, return all reservation info for active reservations of that user
 func GetActiveUserReservations(userId int) ([]models.ReservationDTO, error) {
 	var reservations []models.ReservationDTO
 	querySQL := `SELECT id, userId, time_reserved, time_complete, printerid, is_active, is_egn_reservation FROM reservations WHERE userId = ? AND is_active = 1 ORDER BY time_reserved DESC`
@@ -99,17 +106,21 @@ func GetActiveUserReservations(userId int) ([]models.ReservationDTO, error) {
 	}
 	defer rows.Close()
 
-	for rows.Next() {
-		var reservation models.ReservationDTO
+	for rows.Next() { //for all returned rows
+		var reservation models.ReservationDTO //create a reservation object
+		//scan in all active reservation info
 		err := rows.Scan(&reservation.Id, &reservation.UserId, &reservation.Time_Reserved, &reservation.Time_Complete, &reservation.PrinterId, &reservation.Is_Active, &reservation.Is_Egn_Reservation)
 		if err != nil {
 			return nil, fmt.Errorf("error scanning reservation: %v", err)
 		}
+		//add the reservation object to a list
 		reservations = append(reservations, reservation)
 	}
+	//return the whole list of reservations
 	return reservations, nil
 }
 
+//given a userId, return a user object with all user data
 func GetUserById(userID int) (*models.UserData, error) {
 	var user models.UserData
 	querySQL := `SELECT id, username, has_training, admin, has_executive_access, is_egn_lab, ban_time_end, weekly_minutes FROM users WHERE id = ?`
@@ -120,6 +131,7 @@ func GetUserById(userID int) (*models.UserData, error) {
 	return &user, nil
 }
 
+//given a userId, toggle the user's has_executive_access bool in the users table
 func SetUserExecutiveAccess(userId int) error {
 
 	var currentExecutiveAccess bool
@@ -145,6 +157,7 @@ type AddUserWeeklyMinutesRequest struct {
 	Minutes int `json:"minutes"`
 }
 
+//given a userId and a number of minutes, add those minutes to the user's weekly_minutes
 func AddUserWeeklyMinutes(id int, request AddUserWeeklyMinutesRequest) error {
 	var currentWeeklyMinutes int
 
@@ -169,9 +182,8 @@ type SetUserBanTimeRequest struct {
 	BanTime int `json:"ban_time"`
 }
 
-// Set the user's ban time. Grab id from path, get time in hours from json body. A -1 in json body means set the
-// user's ban_time_end back to NULL in the database. If there is no ban time, the ban becomes current time + hours
-// requested. If there is a current ban, the ban becomes current ban date and time + requested hours, extending the ban.
+//given a userId and a number of hours, add that number of hours to the user's ban. If the user is not banned, they
+//are banned until (now plus the requested hours). If they are banned, add the requested hours to their existing ban time
 func SetUserBanTime(id int, request SetUserBanTimeRequest) error {
 
 	if request.BanTime == -1 { //if passing in -1, set ban_time_end back to NULL in db
