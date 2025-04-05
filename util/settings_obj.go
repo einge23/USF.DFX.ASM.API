@@ -29,6 +29,6 @@ func ImportSettingsFromDB() error {
 	}
 
 	Settings.UpToDate = true
-	Settings.TimeSettings.MaxActiveReservations = 2
+	Settings.MaxActiveReservations = 2
 	return nil
 }

@@ -10,7 +10,7 @@ import (
 //routes here are sort of cascaded / nested. example: on line 28 we see reservePrinter, this is nested inside
 //of /printers, which itself is nested inside of /api. So the route is localhost:3000/api/printers/reservePrinter
 
-//defines all routes and groups for the router
+// defines all routes and groups for the router
 func SetupRouter(r *gin.Engine) {
 	api := r.Group("/api") //master group
 	{
@@ -70,6 +70,8 @@ func SetupRouter(r *gin.Engine) {
 				settings := admin.Group("/settings") //admin-level settings routes
 				{
 					settings.PUT("/setSettings", controllers.SetSettings)
+					settings.GET("/printerSettings", controllers.GetPrinterSettings)
+					settings.PUT("/printerSettings", controllers.SetPrinterSettings)
 				}
 			}
 

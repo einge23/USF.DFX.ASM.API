@@ -34,7 +34,6 @@ func SetSettings(request SetSettingsRequest) error {
 	util.Settings.TimeSettings.DayStart = request.TimeSettings.DayStart
 	util.Settings.TimeSettings.NightStart = request.TimeSettings.NightStart
 	util.Settings.TimeSettings.DefaultUserWeeklyHours = request.TimeSettings.DefaultUserWeeklyHours
-	util.Settings.TimeSettings.MaxActiveReservations = request.TimeSettings.MaxActiveReservations
 
 	//if somehow util is not up to date yet, set it to true
 	util.Settings.UpToDate = true
@@ -58,4 +57,12 @@ func SetSettings(request SetSettingsRequest) error {
 		return fmt.Errorf("error updating settings in db: %v", err)
 	}
 	return nil
+}
+
+func GetPrinterSettings() int {
+	return util.Settings.MaxActiveReservations
+}
+
+func SetPrinterSettings(newMax int) {
+	util.Settings.MaxActiveReservations = newMax
 }

@@ -36,3 +36,22 @@ func SetSettings(c *gin.Context) {
 
 	c.JSON(http.StatusOK, true)
 }
+
+func GetPrinterSettings(c *gin.Context) {
+	max := services.GetPrinterSettings()
+	c.JSON(http.StatusOK, gin.H{"max_active_reservations": max})
+}
+
+func SetPrinterSettings(c *gin.Context) {
+	var req struct {
+		MaxActiveReservations int `json:"max_active_reservations"`
+	}
+
+	if err := c.BindJSON(&req); err != nil || req.MaxActiveReservations <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid reservation limit"})
+		return
+	}
+
+	services.SetPrinterSettings(req.MaxActiveReservations)
+	c.JSON(http.StatusOK, true)
+}
