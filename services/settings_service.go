@@ -20,8 +20,7 @@ func GetSettings() (models.Settings, error) {
 
 // same as models.Settings but no up to date bool
 type SetSettingsRequest struct {
-	TimeSettings          models.TimeSettings `json:"time_settings"`
-	MaxActiveReservations *int                `json:"max_active_reservations"`
+	TimeSettings models.TimeSettings `json:"time_settings"`
 }
 
 func SetSettings(request SetSettingsRequest) error {
@@ -34,7 +33,7 @@ func SetSettings(request SetSettingsRequest) error {
 	util.Settings.TimeSettings.DayStart = request.TimeSettings.DayStart
 	util.Settings.TimeSettings.NightStart = request.TimeSettings.NightStart
 	util.Settings.TimeSettings.DefaultUserWeeklyHours = request.TimeSettings.DefaultUserWeeklyHours
-	util.Settings.MaxActiveReservations = *request.MaxActiveReservations
+	util.Settings.TimeSettings.MaxActiveReservations = request.TimeSettings.MaxActiveReservations
 
 	//if somehow util is not up to date yet, set it to true
 	util.Settings.UpToDate = true

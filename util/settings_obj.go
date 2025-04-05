@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"gin-api/database"
 	"gin-api/models"
-	"sync"
 )
 
 // Global variable referenced by other packages to get/set the settings. Should be
@@ -30,22 +29,6 @@ func ImportSettingsFromDB() error {
 	}
 
 	Settings.UpToDate = true
+	Settings.TimeSettings.MaxActiveReservations = 2
 	return nil
-}
-
-var ( // Set a global variable for the max number of active reservations
-	maxActiveReservations = 2 // Default is 2
-	limitMutex            sync.RWMutex
-)
-
-func GetMaxActiveReservations() int { // Safely return the current limit of active reservations per user
-	limitMutex.RLock()
-	defer limitMutex.RUnlock()
-	return maxActiveReservations
-}
-
-func SetActiveReservations(newLimit int) { // Safely update the global limit of active printer reservations
-	limitMutex.Lock()
-	defer limitMutex.Unlock()
-	maxActiveReservations = newLimit
 }

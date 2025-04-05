@@ -1,9 +1,8 @@
 package models
 
 type Settings struct {
-	TimeSettings          TimeSettings `json:"time_settings"`
-	UpToDate              bool         `json:"up_to_date"`
-	MaxActiveReservations int          `json:"max_active_reservations"`
+	TimeSettings TimeSettings `json:"time_settings"`
+	UpToDate     bool         `json:"up_to_date"`
 }
 
 type TimeSettings struct {
@@ -12,6 +11,7 @@ type TimeSettings struct {
 	DayStart               string    `json:"day_start"`
 	NightStart             string    `json:"night_start"`
 	DefaultUserWeeklyHours int       `json:"default_user_weekly_hours"`
+	MaxActiveReservations  int       `json:"max_active_reservations"`
 }
 
 type PrintTime struct {
