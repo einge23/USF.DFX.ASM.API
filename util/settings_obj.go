@@ -6,15 +6,16 @@ import (
 	"gin-api/models"
 )
 
-//Global variable referenced by other packages to get/set the settings. 
-//faster than fetching from db every time
+// Global variable referenced by other packages to get/set the settings.
+// faster than fetching from db every time
 var Settings models.Settings
 
-// Gets the settings from the database and stores them in the Settings global obj
+// Gets all settings from the database and stores them in the Settings global obj
 func ImportSettingsFromDB() error {
 	querySQL := `SELECT day_max_print_hours_week, night_max_print_hours_week,
 						day_max_print_hours_weekend, night_max_print_hours_weekend,
-						day_start, night_start, default_user_weekly_hours
+						day_start, night_start, default_user_weekly_hours,
+						max_active_reservations
 						FROM settings WHERE name = "default"`
 	err := database.DB.QueryRow(querySQL).Scan(
 		&Settings.TimeSettings.WeekdayPrintTime.DayMaxPrintHours,
@@ -23,11 +24,13 @@ func ImportSettingsFromDB() error {
 		&Settings.TimeSettings.WeekendPrintTime.NightMaxPrintHours,
 		&Settings.TimeSettings.DayStart,
 		&Settings.TimeSettings.NightStart,
-		&Settings.TimeSettings.DefaultUserWeeklyHours)
+		&Settings.TimeSettings.DefaultUserWeeklyHours,
+		&Settings.PrinterSettings.MaxActiveReservations)
 	if err != nil {
 		return fmt.Errorf("error getting settings from db: %v", err)
 	}
 
-	Settings.UpToDate = true
+	Settings.TimeSettings.UpToDate = true
+	Settings.PrinterSettings.UpToDate = true
 	return nil
 }
