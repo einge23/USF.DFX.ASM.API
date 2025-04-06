@@ -8,10 +8,10 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// handles the GetSettings service. Binds JSON to expected format and returns any errors encountered.
-func GetSettings(c *gin.Context) {
-	var settings models.Settings
-	settings, err := services.GetSettings()
+// handles the GetTimeSettings service. Binds JSON to expected format and returns any errors encountered.
+func GetTimeSettings(c *gin.Context) {
+	var settings models.TimeSettings
+	settings, err := services.GetTimeSettings()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"internal server error": err.Error()})
 		return
@@ -20,15 +20,15 @@ func GetSettings(c *gin.Context) {
 	c.JSON(http.StatusOK, settings)
 }
 
-// handles the SetSettings service. Binds JSON to expected format and returns any errors encountered.
-func SetSettings(c *gin.Context) {
+// handles the SetTimeSettings service. Binds JSON to expected format and returns any errors encountered.
+func SetTimeSettings(c *gin.Context) {
 	var req services.SetSettingsRequest
 	if err := c.BindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	err := services.SetSettings(req)
+	err := services.SetTimeSettings(req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"Internal server error": err.Error()})
 		return
@@ -37,21 +37,34 @@ func SetSettings(c *gin.Context) {
 	c.JSON(http.StatusOK, true)
 }
 
+// handles the GetPrinterSettings service. Binds JSON to expected format and returns any errors encountered.
 func GetPrinterSettings(c *gin.Context) {
-	max := services.GetPrinterSettings()
-	c.JSON(http.StatusOK, gin.H{"max_active_reservations": max})
+	printerSettings, err := services.GetPrinterSettings()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"Internal server error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, printerSettings)
 }
 
-func SetPrinterSettings(c *gin.Context) {
-	var req struct {
-		MaxActiveReservations int `json:"max_active_reservations"`
-	}
+//Request body for setting printer settings
+type SetPrinterSettingsRequest struct {
+	MaxActiveReservations int `json:"max_active_reservations"`
+}
 
-	if err := c.BindJSON(&req); err != nil || req.MaxActiveReservations <= 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid reservation limit"})
+// handles the SetPrinterSettings service. Binds JSON to expected format and returns any errors encountered.
+func SetPrinterSettings(c *gin.Context) {
+	var req SetPrinterSettingsRequest
+
+	if err := c.BindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	services.SetPrinterSettings(req.MaxActiveReservations)
+	err := services.SetPrinterSettings(req.MaxActiveReservations)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"Internal server error": err.Error()})
+		return
+	}
 	c.JSON(http.StatusOK, true)
 }

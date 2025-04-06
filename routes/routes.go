@@ -41,7 +41,7 @@ func SetupRouter(r *gin.Engine) {
 			}
 			settings := protected.Group("/settings") //user-level settings routes
 			{
-				settings.GET("/getSettings", controllers.GetSettings)
+				settings.GET("/getTimeSettings", controllers.GetTimeSettings)
 			}
 			reservations := protected.Group("/reservations") //user-level reservations routes
 			{
@@ -69,9 +69,9 @@ func SetupRouter(r *gin.Engine) {
 				}
 				settings := admin.Group("/settings") //admin-level settings routes
 				{
-					settings.PUT("/setSettings", controllers.SetSettings)
-					settings.GET("/printerSettings", controllers.GetPrinterSettings)
-					settings.PUT("/printerSettings", controllers.SetPrinterSettings)
+					settings.PUT("/setTimeSettings", controllers.SetTimeSettings)
+					settings.GET("/getPrinterSettings", controllers.GetPrinterSettings)
+					settings.PUT("/setPrinterSettings", controllers.SetPrinterSettings)
 				}
 			}
 

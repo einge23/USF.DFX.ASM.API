@@ -166,9 +166,9 @@ func ReservePrinter(printerId int, userId int, timeMins int) (bool, error) {
 	}
 
 	// Check if the active reservation count is larger than the limit and return false if it is
-	limit := util.Settings.MaxActiveReservations // Set limit to the amount of active reservations that the administrator passes
+	limit := util.Settings.PrinterSettings.MaxActiveReservations // Set limit to the amount of active reservations that the administrator passes
 	if activeReservationCount >= limit {
-		return false, fmt.Errorf("maximum of active reservations per user allowed is ", limit)
+		return false, fmt.Errorf("maximum of active reservations per user allowed is %d", limit)
 	}
 
 	// Start transaction
