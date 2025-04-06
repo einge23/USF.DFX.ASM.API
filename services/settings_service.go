@@ -5,6 +5,7 @@ import (
 	"gin-api/database"
 	"gin-api/models"
 	"gin-api/util"
+	"path/filepath"
 )
 
 // get the time settings from the global obj if its up to date.
@@ -86,4 +87,31 @@ func SetPrinterSettings(newMax int) error {
 	//raise upToDate flag for printerSettings
 	util.Settings.PrinterSettings.UpToDate = true
 	return nil
+}
+
+type ExportDbToUsbRequest struct {
+	Table string `json:"table"`
+}
+
+//Given the name of a table in the db, create a CSV file on a plugged-in USB drive with
+//that table's information.
+func ExportDbToUsb(request ExportDbToUsbRequest) (bool, error) {
+	drivePath, err := util.FindUSBDrive()
+	if err != nil {
+		return false, fmt.Errorf("error finding USB drive: %v", err)
+	}
+
+	//Create string for name of csv file
+	csvName := fmt.Sprintf("%s_export.csv", request.Table)
+
+	//Create full CSV path on the USB
+	outputPath := filepath.Join(drivePath, csvName)
+
+	//Export to that path
+	err = util.ExportTableToCSV(request.Table, outputPath)
+	if err != nil {
+		return false, fmt.Errorf("error exporting DB table to CSV: %v", err)
+	}
+
+	return true, nil
 }
