@@ -7,24 +7,24 @@ import (
 	"gin-api/util"
 )
 
-//get the settings from the global obj if its up to date.
-//if it isnt up to date, update it by pulling the info out of the db
-func GetSettings() (models.Settings, error) {
+// get the time settings from the global obj if its up to date.
+// if it isnt up to date, update it by pulling the info out of the db
+func GetTimeSettings() (models.TimeSettings, error) {
 
 	var err error = nil          //no error by default
-	if !util.Settings.UpToDate { //if not up to date, fetch settings from DB
+	if !util.Settings.TimeSettings.UpToDate { //if not up to date, fetch settings from DB
 		err = util.ImportSettingsFromDB()
 	}
-	return util.Settings, err //return error if it exists, still nil if no error
+	return util.Settings.TimeSettings, err //return error if it exists, still nil if no error
 }
 
-//same as models.Settings but no up to date bool
+// same as models.Settings but no up to date bool
 type SetSettingsRequest struct {
 	TimeSettings models.TimeSettings `json:"time_settings"`
 }
 
-//directly set all time settings values both in the global obj and the database to avoid desync
-func SetSettings(request SetSettingsRequest) error {
+// directly set all time settings values both in the global obj and the database to avoid desync
+func SetTimeSettings(request SetSettingsRequest) error {
 
 	//update global obj
 	util.Settings.TimeSettings.WeekdayPrintTime.DayMaxPrintHours = request.TimeSettings.WeekdayPrintTime.DayMaxPrintHours
@@ -35,8 +35,8 @@ func SetSettings(request SetSettingsRequest) error {
 	util.Settings.TimeSettings.NightStart = request.TimeSettings.NightStart
 	util.Settings.TimeSettings.DefaultUserWeeklyHours = request.TimeSettings.DefaultUserWeeklyHours
 
-	//if somehow util is not up to date yet, set it to true
-	util.Settings.UpToDate = true
+	//if somehow UpToDate bool is not set yet, set it to true
+	util.Settings.TimeSettings.UpToDate = true
 
 	updateSQL := `UPDATE settings SET 
 				day_max_print_hours_week = ?, night_max_print_hours_week = ?,
@@ -56,5 +56,34 @@ func SetSettings(request SetSettingsRequest) error {
 	if err != nil {
 		return fmt.Errorf("error updating settings in db: %v", err)
 	}
+	return nil
+}
+
+//get the printer settings from global obj if it is up to date.
+//If it is not up to date, import the settings from the DB and then get them.
+func GetPrinterSettings() (models.PrinterSettings, error) {
+	var err error = nil //no error by default
+	if !util.Settings.PrinterSettings.UpToDate {
+		err = util.ImportSettingsFromDB()
+	}
+	return util.Settings.PrinterSettings, err
+}
+
+//sets the printer settings passed in by the request. Currently the only printer
+//setting is the max active reservations. Logic for other printer settings should be
+//added here and request body should be added to.
+func SetPrinterSettings(newMax int) error {
+	if newMax <= 0 {
+		return fmt.Errorf("max reservations must be a positive number")
+	}
+	//update global obj
+	util.Settings.PrinterSettings.MaxActiveReservations = newMax
+
+	//update in database
+	updateSQL := `UPDATE settings SET max_active_reservations = ? WHERE name = "default"`
+	database.DB.Exec(updateSQL, newMax)
+
+	//raise upToDate flag for printerSettings
+	util.Settings.PrinterSettings.UpToDate = true
 	return nil
 }
