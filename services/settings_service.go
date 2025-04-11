@@ -113,5 +113,10 @@ func ExportDbToUsb(request ExportDbToUsbRequest) (bool, error) {
 		return false, fmt.Errorf("error exporting DB table to CSV: %v", err)
 	}
 
+	err = util.UnmountUSB()
+	if err != nil {
+		return false, err
+	}
+
 	return true, nil
 }
