@@ -1,11 +1,9 @@
-# Script detects any mounted usb partitions, and removes them all.
-
 #!/bin/bash
 
 # Function to detect all mounted removable USB partitions
 detect_mounted_usb_partitions() {
-    # Use lsblk to find mounted removable partitions
-    PARTITIONS=$(lsblk -ln -o NAME,TYPE,RM,MOUNTPOINT | grep "part" | awk '$2 == "part" && $3 == "1" && $4 != "" {print "/dev/" $1}')
+    # Use lsblk to find mounted removable partitions and exclude the SD card (/dev/mmcblk0*)
+    PARTITIONS=$(lsblk -ln -o NAME,TYPE,RM,MOUNTPOINT | grep "part" | awk '$2 == "part" && $3 == "1" && $4 != "/" {print "/dev/" $1}')
     echo "$PARTITIONS"
 }
 
