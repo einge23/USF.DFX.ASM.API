@@ -25,7 +25,7 @@ unmount_and_eject_usb_partitions() {
         if [ $? -eq 0 ]; then
             echo "$PARTITION unmounted successfully."
             echo "Ejecting $PARTITION..."
-            eject "$PARTITION"
+            sudo eject "$PARTITION"
             if [ $? -eq 0 ]; then
                 echo "$PARTITION ejected successfully."
             else
