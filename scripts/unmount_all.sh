@@ -7,8 +7,8 @@ detect_mounted_usb_partitions() {
     echo "$PARTITIONS"
 }
 
-# Function to unmount removable USB partitions
-unmount_usb_partitions() {
+# Function to unmount and eject removable USB partitions
+unmount_and_eject_usb_partitions() {
     PARTITIONS=$(detect_mounted_usb_partitions)
 
     if [ -z "$PARTITIONS" ]; then
@@ -24,11 +24,18 @@ unmount_usb_partitions() {
         umount "$PARTITION"
         if [ $? -eq 0 ]; then
             echo "$PARTITION unmounted successfully."
+            echo "Ejecting $PARTITION..."
+            eject "$PARTITION"
+            if [ $? -eq 0 ]; then
+                echo "$PARTITION ejected successfully."
+            else
+                echo "Failed to eject $PARTITION."
+            fi
         else
             echo "Failed to unmount $PARTITION."
         fi
     done
 }
 
-# Execute the unmounting function
-unmount_usb_partitions
+# Execute the unmount and eject function
+unmount_and_eject_usb_partitions
