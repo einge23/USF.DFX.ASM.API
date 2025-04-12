@@ -9,7 +9,7 @@ import (
 )
 
 func FindUSBDrive() (string, error) {
-	switch onRpi {
+	switch OnRpi {
 	case false:
 		return scanWindowsDrives()
 	case true:

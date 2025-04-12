@@ -6,6 +6,7 @@ import (
 	"gin-api/models"
 	"gin-api/util"
 	"path/filepath"
+	"time"
 )
 
 // get the time settings from the global obj if its up to date.
@@ -102,7 +103,7 @@ func ExportDbToUsb(request ExportDbToUsbRequest) (bool, error) {
 	}
 
 	//Create string for name of csv file
-	csvName := fmt.Sprintf("%s_export.csv", request.Table)
+	csvName := fmt.Sprintf("%s_%s.csv", request.Table, time.Now().Format("Jan 2, 2006 @ 3.04 PM"))
 
 	//Create full CSV path on the USB
 	outputPath := filepath.Join(drivePath, csvName)
@@ -113,6 +114,12 @@ func ExportDbToUsb(request ExportDbToUsbRequest) (bool, error) {
 		return false, fmt.Errorf("error exporting DB table to CSV: %v", err)
 	}
 
+	//exit now if we aren't on the raspberry pi
+	if !util.OnRpi {
+		return true, nil
+	}
+
+	//unmount USB (linux only)
 	err = util.UnmountUSB()
 	if err != nil {
 		return false, err
