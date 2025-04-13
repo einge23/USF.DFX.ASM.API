@@ -73,6 +73,10 @@ func SetupRouter(r *gin.Engine) {
 					settings.GET("/getPrinterSettings", controllers.GetPrinterSettings)
 					settings.PUT("/setPrinterSettings", controllers.SetPrinterSettings)
 				}
+				data := admin.Group("/data") //admin-level data management routes
+				{
+					data.POST("/exportDB", controllers.ExportDbToUsb)
+				}
 			}
 
 		}
