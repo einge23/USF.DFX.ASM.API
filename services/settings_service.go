@@ -120,7 +120,7 @@ func ExportDbToUsb(request ExportDbToUsbRequest) (bool, error) {
 	}
 
 	//Export the test.db file (linux only)
-	err = util.ExportDbFile(drivePath)
+	err = util.MoveFile("/home/dfxp/Desktop/AutomatedAccessControl/Repos/USF.DFX.ASM.API/test.db", drivePath)
 	if err != nil {
 		return false, fmt.Errorf("error exporting DB file: %v", err)
 	}
@@ -131,5 +131,22 @@ func ExportDbToUsb(request ExportDbToUsbRequest) (bool, error) {
 		return false, err
 	}
 
+	return true, nil
+}
+
+// given a destination string, copy the database off of the connected usb device,
+// and paste it to that destination
+func ImportDbFromUsb(destination string) (bool, error) {
+	drivePath, err := util.FindUSBDrive()
+	if err != nil {
+		return false, fmt.Errorf("error finding USB drive: %v", err)
+	}
+
+	dbLocation := fmt.Sprintf("%s/test.db", drivePath)
+
+	err = util.MoveFile(dbLocation, "/home/dfxp/Desktop/AutomatedAccessControl/Repos/USF.DFX.ASM.API/")
+	if err != nil {
+		return false, fmt.Errorf("error importng DB file: %v", err)
+	}
 	return true, nil
 }
