@@ -10,7 +10,9 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-func ExportTableToCSV(tableName, outputCSV string) error {
+// given the name of a db table and the name of a proposed csv file, create a .csv file
+// that represents that table in the db, with the name provided.
+func ExportTableToCSV(tableName string, outputCSV string) error {
 	db, err := sql.Open("sqlite3", "test.db")
 	if err != nil {
 		return fmt.Errorf("failed to open db: %v", err)
@@ -69,6 +71,7 @@ func ExportTableToCSV(tableName, outputCSV string) error {
 	return nil
 }
 
+// given a string to represent a path, copy the database to that path.
 func ExportDbFile(path string) error {
 	cmd := exec.Command("cp", "/home/dfxp/Desktop/AutomatedAccessControl/Repos/USF.DFX.ASM.API/test.db", path)
 

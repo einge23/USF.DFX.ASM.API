@@ -114,6 +114,7 @@ func ExportDbToUsb(request ExportDbToUsbRequest) (bool, error) {
 		return false, fmt.Errorf("error exporting DB table to CSV: %v", err)
 	}
 
+	//Export the test.db file
 	err = util.ExportDbFile(drivePath)
 	if err != nil {
 		return false, fmt.Errorf("error exporting DB file: %v", err)
