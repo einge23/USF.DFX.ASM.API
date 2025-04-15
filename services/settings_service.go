@@ -114,15 +114,15 @@ func ExportDbToUsb(request ExportDbToUsbRequest) (bool, error) {
 		return false, fmt.Errorf("error exporting DB table to CSV: %v", err)
 	}
 
-	//Export the test.db file
-	err = util.ExportDbFile(drivePath)
-	if err != nil {
-		return false, fmt.Errorf("error exporting DB file: %v", err)
-	}
-
 	//exit now if we aren't on the raspberry pi
 	if !util.OnRpi {
 		return true, nil
+	}
+
+	//Export the test.db file (linux only)
+	err = util.ExportDbFile(drivePath)
+	if err != nil {
+		return false, fmt.Errorf("error exporting DB file: %v", err)
 	}
 
 	//unmount USB (linux only)
