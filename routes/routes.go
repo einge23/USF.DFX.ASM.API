@@ -77,6 +77,7 @@ func SetupRouter(r *gin.Engine) {
 				{
 					data.POST("/exportDB", controllers.ExportDbToUsb)
 					data.GET("/importDB", controllers.ImportDbFromUsb)
+					data.PUT("/ejectUSB", controllers.EjectUSB)
 				}
 			}
 

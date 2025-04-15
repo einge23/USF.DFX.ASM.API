@@ -125,12 +125,6 @@ func ExportDbToUsb(request ExportDbToUsbRequest) (bool, error) {
 		return false, fmt.Errorf("error exporting DB file: %v", err)
 	}
 
-	//unmount USB (linux only)
-	err = util.UnmountUSB()
-	if err != nil {
-		return false, err
-	}
-
 	return true, nil
 }
 
@@ -146,7 +140,19 @@ func ImportDbFromUsb(destination string) (bool, error) {
 
 	err = util.MoveFile(dbLocation, "/home/dfxp/Desktop/AutomatedAccessControl/Repos/USF.DFX.ASM.API/")
 	if err != nil {
-		return false, fmt.Errorf("error importng DB file: %v", err)
+		return false, fmt.Errorf("error importing DB file: %v", err)
 	}
+	return true, nil
+}
+
+//unmount the USB (linux only)
+func EjectUSB() (bool, error) {
+
+	//unmount USB (linux only)
+	err := util.UnmountUSB()
+	if err != nil {
+		return false, err
+	}
+
 	return true, nil
 }
