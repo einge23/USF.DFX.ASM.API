@@ -9,8 +9,8 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-func ExportTableToCSV(dbPath, tableName, outputCSV string) error {
-	db, err := sql.Open("sqlite3", dbPath)
+func ExportTableToCSV(tableName, outputCSV string) error {
+	db, err := sql.Open("sqlite3", "test.db")
 	if err != nil {
 		return fmt.Errorf("failed to open db: %v", err)
 	}

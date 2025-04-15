@@ -4,18 +4,18 @@ package util
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
-	"runtime"
 )
 
 func FindUSBDrive() (string, error) {
-	switch runtime.GOOS {
-	case "windows":
+	switch OnRpi {
+	case false:
 		return scanWindowsDrives()
-	case "linux":
+	case true:
 		return scanLinuxDrives()
 	default:
-		return "", fmt.Errorf("unsupported OS: %s", runtime.GOOS)
+		return "", fmt.Errorf("unsupported OS. Only Windows and Linux are supported")
 	}
 }
 
@@ -30,11 +30,11 @@ func scanWindowsDrives() (string, error) {
 }
 
 func scanLinuxDrives() (string, error) {
-	base := "/media/pi" // Depends on the Raspberry Pi
+	base := "/media/dfxp/" // Depends on the Raspberry Pi
 
 	entries, err := os.ReadDir(base)
 	if err != nil {
-		return "", fmt.Errorf("failed to read /media: %v", err)
+		return "", fmt.Errorf("failed to read /media/dfxp/: %v", err)
 	}
 
 	for _, entry := range entries {
@@ -43,4 +43,14 @@ func scanLinuxDrives() (string, error) {
 		}
 	}
 	return "", fmt.Errorf("no USB drive found on Linux")
+}
+
+func UnmountUSB() error {
+	cmd := exec.Command("bash", "/home/dfxp/Desktop/AutomatedAccessControl/Repos/USF.DFX.ASM.API/scripts/unmount_all.sh")
+
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("error unmounting: %v, script output: %s", err, string(output))
+	}
+	return nil
 }

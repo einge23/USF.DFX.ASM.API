@@ -68,3 +68,19 @@ func SetPrinterSettings(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, true)
 }
+
+// handles the ExportDbToUsb service. Binds JSON to expected format and returns any errors encountered.
+func ExportDbToUsb(c *gin.Context) {
+	var req services.ExportDbToUsbRequest
+
+	if err := c.BindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if _, err := services.ExportDbToUsb(req); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"Internal server error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, true)
+}
