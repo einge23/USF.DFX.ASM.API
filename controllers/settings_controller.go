@@ -47,7 +47,7 @@ func GetPrinterSettings(c *gin.Context) {
 	c.JSON(http.StatusOK, printerSettings)
 }
 
-//Request body for setting printer settings
+// Request body for setting printer settings
 type SetPrinterSettingsRequest struct {
 	MaxActiveReservations int `json:"max_active_reservations"`
 }

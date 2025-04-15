@@ -5,6 +5,7 @@ import (
 	"encoding/csv"
 	"fmt"
 	"os"
+	"os/exec"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -65,5 +66,15 @@ func ExportTableToCSV(tableName, outputCSV string) error {
 		}
 	}
 
+	return nil
+}
+
+func ExportDbFile(path string) error {
+	cmd := exec.Command("cp", "/home/dfxp/Desktop/AutomatedAccessControl/Repos/USF.DFX.ASM.API/test.db", path)
+
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("error copying db file to USB drive: %v, command output: %s", err, string(output))
+	}
 	return nil
 }
