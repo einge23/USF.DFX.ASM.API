@@ -142,6 +142,10 @@ func ImportDbFromUsb(destination string) (bool, error) {
 	if err != nil {
 		return false, fmt.Errorf("error importing DB file: %v", err)
 	}
+
+	//set all settings as not up to date since a new database is now in place
+	util.ToggleUpToDateAll(false)
+	
 	return true, nil
 }
 
