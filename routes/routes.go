@@ -76,7 +76,7 @@ func SetupRouter(r *gin.Engine) {
 				data := admin.Group("/data") //admin-level data management routes
 				{
 					data.POST("/exportDB", controllers.ExportDbToUsb)
-					data.GET("/importDB", controllers.ImportDbFromUsb)
+					data.POST("/importDB", controllers.ImportDbFromUsb)
 					data.PUT("/ejectUSB", controllers.EjectUSB)
 				}
 			}
