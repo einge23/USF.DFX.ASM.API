@@ -84,3 +84,23 @@ func ExportDbToUsb(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, true)
 }
+
+func ImportDbFromUsb(c *gin.Context) {
+	_, err := services.ImportDbFromUsb("/home/dfxp/Desktop/AutomatedAccessControl/Repos/USF.DFX.ASM.API/")
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, true)
+}
+
+func EjectUSB(c *gin.Context) {
+	_, err := services.EjectUSB()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, true)
+}

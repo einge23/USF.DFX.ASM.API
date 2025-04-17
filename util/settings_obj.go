@@ -30,7 +30,12 @@ func ImportSettingsFromDB() error {
 		return fmt.Errorf("error getting settings from db: %v", err)
 	}
 
-	Settings.TimeSettings.UpToDate = true
-	Settings.PrinterSettings.UpToDate = true
+	ToggleUpToDateAll(true)
 	return nil
+}
+
+//given a bool, set the UpToDate values of all the settings subobjects to that bool setting
+func ToggleUpToDateAll(state bool) {
+	Settings.PrinterSettings.UpToDate = state
+	Settings.TimeSettings.UpToDate = state
 }
