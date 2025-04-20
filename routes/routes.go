@@ -25,6 +25,7 @@ func SetupRouter(r *gin.Engine) {
 			printers := protected.Group("/printers") //user-level printer routes
 			{
 				printers.GET("/getPrinters", controllers.GetPrinters)
+				printers.GET("/getPrinters/rack/:rackId", controllers.GetPrintersByRackId)
 				printers.PUT("/reservePrinter", controllers.ReservePrinter)
 			}
 			users := protected.Group("/users") //user-level user routes
@@ -66,6 +67,7 @@ func SetupRouter(r *gin.Engine) {
 					printers.POST("/create", controllers.AddPrinter)
 					printers.PUT("/setExecutive/:printerID", controllers.SetPrinterExecutive)
 					printers.PUT("/update/:printerID", controllers.UpdatePrinter)
+					printers.DELETE("/delete/:printerID", controllers.DeletePrinter)
 				}
 				settings := admin.Group("/settings") //admin-level settings routes
 				{

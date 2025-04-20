@@ -2,18 +2,22 @@ package services
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"gin-api/database"
 	"gin-api/models"
 	"gin-api/util"
 	"log"
+	"strings"
 	"time"
+
+	"github.com/mattn/go-sqlite3" // Import the sqlite3 driver
 )
 
 // return all printers by rack for specific system (EGN or General), as serialized JSON
 func GetPrinters(isEgnLab bool) ([]models.Printer, error) {
-	// Build query based on isEgnLab parameter
-	query := "SELECT id, name, color, rack, in_use, last_reserved_by, is_executive FROM printers WHERE is_egn_printer = ? order by rack asc"
+	// Build query based on isEgnLab parameter, include rack_position
+	query := "SELECT id, name, color, rack, rack_position, in_use, last_reserved_by, is_executive, is_egn_printer FROM printers WHERE is_egn_printer = ? order by rack asc, rack_position asc"
 
 	// Execute query with appropriate parameter
 	rows, err := database.DB.Query(query, isEgnLab)
@@ -26,7 +30,8 @@ func GetPrinters(isEgnLab bool) ([]models.Printer, error) {
 	for rows.Next() {
 		var p models.Printer
 		var lastReservedBy sql.NullString
-		if err := rows.Scan(&p.Id, &p.Name, &p.Color, &p.Rack, &p.In_Use, &lastReservedBy, &p.Is_Executive); err != nil {
+		// Scan rack_position
+		if err := rows.Scan(&p.Id, &p.Name, &p.Color, &p.Rack, &p.Rack_Position, &p.In_Use, &lastReservedBy, &p.Is_Executive, &p.Is_Egn_Printer); err != nil {
 			return nil, fmt.Errorf("scan error: %v", err)
 		}
 		if lastReservedBy.Valid {
@@ -43,67 +48,150 @@ func GetPrinters(isEgnLab bool) ([]models.Printer, error) {
 	return printers, nil
 }
 
-// given a printer object, add a printer with those attributes. ID correlates to physical plug.
+// given a printer object, add a printer with those attributes. ID correlates to physical plug (1-28).
+// Rack position is automatically calculated as the next available position in the specified rack.
 func AddPrinter(request models.Printer) (bool, error) {
-
-	var id int
-	row := database.DB.QueryRow("SELECT id FROM printers WHERE id = ?", request.Id)
-	err := row.Scan(&id)
-
-	//No row exists, proceed with add
-	if err == sql.ErrNoRows {
-		insertSQL := `INSERT INTO printers (id, name, color, rack, in_use, last_reserved_by, is_executive, is_egn_printer) values (?, ?, ?, ?, ?, ?, ?, ?)`
-		_, err = database.DB.Exec(insertSQL,
-			request.Id,
-			request.Name,
-			request.Color,
-			request.Rack,
-			request.In_Use,
-			nil,
-			request.Is_Executive,
-			request.Is_Egn_Printer)
-		if err != nil {
-			return false, fmt.Errorf("error inserting new printer to DB: %v", err)
-		}
-		return true, nil
-
-		//some other error has happened
-	} else if err != nil {
-		return false, err
+	// --- BEGINNING OF CHANGES ---
+	// Validate Printer ID range
+	if request.Id < 1 || request.Id > 28 {
+		return false, fmt.Errorf("invalid printer ID: %d. ID must be between 1 and 28", request.Id)
 	}
-	//Row exists
-	return false, fmt.Errorf("printer with specified ID already exists")
+
+	// Check total printer count
+	var printerCount int
+	err := database.DB.QueryRow("SELECT COUNT(*) FROM printers").Scan(&printerCount)
+	if err != nil {
+		return false, fmt.Errorf("error checking printer count: %v", err)
+	}
+	if printerCount >= 28 {
+		return false, fmt.Errorf("maximum number of printers (28) already reached")
+	}
+	// --- END OF CHANGES ---
+
+	// Check if printer ID already exists
+	var existingId int
+	err = database.DB.QueryRow("SELECT id FROM printers WHERE id = ?", request.Id).Scan(&existingId)
+	if err == nil {
+		// Row exists, printer ID is already taken
+		return false, fmt.Errorf("printer with specified ID %d already exists", request.Id)
+	} else if !errors.Is(err, sql.ErrNoRows) { // Use errors.Is for better error checking
+		// Some other database error occurred
+		return false, fmt.Errorf("error checking for existing printer ID: %v", err)
+	}
+	// No row exists with this ID, proceed with add
+
+	// Start transaction
+	tx, err := database.DB.Begin()
+	if err != nil {
+		return false, fmt.Errorf("failed to begin transaction: %v", err)
+	}
+	// Use defer with a named error to handle rollback/commit
+	var txErr error
+	defer func() {
+		if txErr != nil {
+			tx.Rollback()
+		} else {
+			// Only commit if txErr is nil
+			commitErr := tx.Commit()
+			if commitErr != nil {
+				// If commit fails, log it, but the primary error (txErr) might be more relevant if it exists
+				log.Printf("Error committing transaction for AddPrinter: %v", commitErr)
+				// Ensure txErr reflects the commit failure if it was previously nil
+				if txErr == nil {
+					txErr = commitErr
+				}
+			}
+		}
+	}()
+
+	// Find the maximum rack_position for the given rack within the transaction
+	var maxRackPosition sql.NullInt64
+	// Use tx.QueryRow within the transaction
+	err = tx.QueryRow("SELECT MAX(rack_position) FROM printers WHERE rack = ?", request.Rack).Scan(&maxRackPosition)
+	// Check specifically for ErrNoRows, which is okay here (means first in rack)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		txErr = fmt.Errorf("error finding max rack position: %v", err)
+		return false, txErr
+	}
+
+	// Calculate the next rack position
+	var newRackPosition int
+	if maxRackPosition.Valid {
+		newRackPosition = int(maxRackPosition.Int64) + 1
+	} else {
+		newRackPosition = 1 // First printer in this rack
+	}
+
+	// Insert the new printer with the calculated rack_position
+	insertSQL := `INSERT INTO printers (id, name, color, rack, rack_position, in_use, last_reserved_by, is_executive, is_egn_printer) values (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	_, err = tx.Exec(insertSQL,
+		request.Id,
+		request.Name,
+		request.Color,
+		request.Rack,
+		newRackPosition, // Use calculated position
+		false,           // New printers are not in use
+		nil,             // No one has reserved it yet
+		request.Is_Executive,
+		request.Is_Egn_Printer)
+	if err != nil {
+		txErr = fmt.Errorf("error inserting new printer to DB: %v", err)
+		return false, txErr
+	}
+
+	// If we reach here, txErr is nil, and the defer will commit.
+	return true, nil // Return nil error on success
 }
 
 type UpdatePrinterRequest struct {
 	Name         string `json:"name"`
 	Color        string `json:"color"`
 	Rack         int    `json:"rack"`
+	RackPosition int    `json:"rack_position"` // Added rack position
 	IsExecutive  bool   `json:"is_executive"`
 	IsEgnPrinter bool   `json:"is_egn_printer"`
 }
 
-// given printer id and name, color, rack, is_executive, is_egn, change the values of that printer
-// to match the attributes passed in.
+// given printer id and attributes, update the printer.
+// Checks if the target rack and position are already occupied by another printer.
 func UpdatePrinter(id int, request UpdatePrinterRequest) (bool, error) {
-
-	row := database.DB.QueryRow("SELECT id FROM printers WHERE id = ?", id)
-	err := row.Scan(&id)
-
-	//No row exists
-	if err == sql.ErrNoRows {
-		return false, fmt.Errorf("printer does not exist")
-
-		//some other error has happened
-	} else if err != nil {
-		return false, err
+	// Validate RackPosition
+	if request.RackPosition <= 0 {
+		return false, fmt.Errorf("invalid or missing rack_position: must be greater than 0")
 	}
-	//printer exists
-	updateSQL := `UPDATE printers SET name = ?, color = ?, rack = ?, is_executive = ?, is_egn_printer = ? WHERE id = ?`
+	// Validate Rack
+	if request.Rack <= 0 {
+		return false, fmt.Errorf("invalid or missing rack: must be greater than 0")
+	}
+
+	// Check if the printer to be updated exists
+	var currentId int
+	err := database.DB.QueryRow("SELECT id FROM printers WHERE id = ?", id).Scan(&currentId)
+	if err == sql.ErrNoRows {
+		return false, fmt.Errorf("printer with id %d does not exist", id)
+	} else if err != nil {
+		return false, fmt.Errorf("error checking if printer exists: %v", err)
+	}
+
+	// Check if the target rack and position is already occupied by *another* printer
+	var conflictingId int
+	err = database.DB.QueryRow("SELECT id FROM printers WHERE rack = ? AND rack_position = ? AND id != ?", request.Rack, request.RackPosition, id).Scan(&conflictingId)
+	if err == nil {
+		// A conflicting printer was found
+		return false, fmt.Errorf("rack %d position %d is already occupied by printer ID %d", request.Rack, request.RackPosition, conflictingId)
+	} else if err != sql.ErrNoRows {
+		// An actual error occurred during the check
+		return false, fmt.Errorf("error checking for conflicting printer position: %v", err)
+	}
+	// No conflict found, or the only printer at the target location is the one being updated (which is fine if rack/pos aren't changing)
+
+	// Proceed with the update
+	updateSQL := `UPDATE printers SET name = ?, color = ?, rack = ?, rack_position = ?, is_executive = ?, is_egn_printer = ? WHERE id = ?`
 	_, err = database.DB.Exec(updateSQL,
 		request.Name,
 		request.Color,
 		request.Rack,
+		request.RackPosition, // Include rack position in update
 		request.IsExecutive,
 		request.IsEgnPrinter,
 		id)
@@ -137,16 +225,22 @@ func ReservePrinter(printerId int, userId int, timeMins int) (bool, error) {
 
 	var printer models.Printer
 	var lastReservedBy sql.NullString
-	if err := database.DB.QueryRow("SELECT id, name, color, rack, in_use, last_reserved_by, is_executive, is_egn_printer FROM printers WHERE id = ?", printerId).Scan(
+	// Include rack_position in the select query
+	if err := database.DB.QueryRow("SELECT id, name, color, rack, rack_position, in_use, last_reserved_by, is_executive, is_egn_printer FROM printers WHERE id = ?", printerId).Scan(
 		&printer.Id,
 		&printer.Name,
 		&printer.Color,
 		&printer.Rack,
+		&printer.Rack_Position, // Scan rack_position
 		&printer.In_Use,
 		&lastReservedBy,
 		&printer.Is_Executive,
 		&printer.Is_Egn_Printer); err != nil {
-		return false, fmt.Errorf("failed to get printer: %v", err)
+		// Check if it's specifically a "no rows" error
+		if err == sql.ErrNoRows {
+			return false, fmt.Errorf("printer with id %d not found", printerId)
+		}
+		return false, fmt.Errorf("failed to get printer details: %v", err)
 	}
 
 	if lastReservedBy.Valid {
@@ -203,7 +297,8 @@ func ReservePrinter(printerId int, userId int, timeMins int) (bool, error) {
 	}
 
 	if rowsAffected == 0 {
-		txErr = fmt.Errorf("no printer found with id: %d", printerId)
+		// This case should theoretically be caught by the initial printer check, but good to have defense in depth
+		txErr = fmt.Errorf("no printer found with id: %d during update", printerId)
 		return false, txErr
 	}
 
@@ -248,6 +343,7 @@ func ReservePrinter(printerId int, userId int, timeMins int) (bool, error) {
 
 	// Commit transaction
 	if err = tx.Commit(); err != nil {
+		// Rollback happened in defer, but we still need to return the commit error
 		return false, fmt.Errorf("failed to commit transaction: %v", err)
 	}
 
@@ -258,9 +354,11 @@ func ReservePrinter(printerId int, userId int, timeMins int) (bool, error) {
 		// We should try to undo our changes
 		undoErr := undoReservation(printerId, int(reservationId), userId, currentWeeklyMinutes)
 		if undoErr != nil {
-			log.Printf("failed to undo reservation after printer turn on error: %v", undoErr)
+			log.Printf("CRITICAL: failed to undo reservation after printer turn on error: %v. Manual intervention may be required.", undoErr)
+		} else {
+			log.Printf("Reservation %d for printer %d successfully rolled back due to TurnOnPrinter failure.", reservationId, printerId)
 		}
-		return false, fmt.Errorf("error turning on printer: %v", err)
+		return false, fmt.Errorf("error turning on printer: %v. Reservation has been rolled back", err)
 	}
 
 	// Set up timer to complete/end the reservation
@@ -292,29 +390,37 @@ func undoReservation(printerId, reservationId, userId, originalWeeklyMinutes int
 	if err != nil {
 		return fmt.Errorf("failed to begin undo transaction: %v", err)
 	}
+	var txErr error
+	defer func() {
+		if txErr != nil {
+			tx.Rollback()
+		} else {
+			tx.Commit()
+		}
+	}()
 
 	// Set printer back to not in use
 	_, err = tx.Exec("UPDATE printers SET in_use = FALSE WHERE id = ?", printerId)
 	if err != nil {
-		tx.Rollback()
-		return fmt.Errorf("failed to undo printer status: %v", err)
+		txErr = fmt.Errorf("failed to undo printer status: %v", err)
+		return txErr
 	}
 
 	// Set reservation to inactive
 	_, err = tx.Exec("UPDATE reservations SET is_active = FALSE WHERE id = ?", reservationId)
 	if err != nil {
-		tx.Rollback()
-		return fmt.Errorf("failed to undo reservation: %v", err)
+		txErr = fmt.Errorf("failed to undo reservation status: %v", err)
+		return txErr
 	}
 
 	// Restore user's weekly minutes
 	_, err = tx.Exec("UPDATE users SET weekly_minutes = ? WHERE id = ?", originalWeeklyMinutes, userId)
 	if err != nil {
-		tx.Rollback()
-		return fmt.Errorf("failed to restore user minutes: %v", err)
+		txErr = fmt.Errorf("failed to restore user minutes: %v", err)
+		return txErr
 	}
 
-	return tx.Commit()
+	return nil // txErr is nil, commit will happen in defer
 }
 
 // turn off the printer, set the relevant printer as not in use, set the reservation to no longer be active
@@ -323,7 +429,8 @@ func CompleteReservation(printerId, reservationId int) {
 	//Turn off the printer
 	_, err := util.TurnOffPrinter(printerId)
 	if err != nil {
-		log.Printf("failed to turn off printer: %v", err)
+		log.Printf("failed to turn off printer %d: %v", printerId, err)
+		// Decide if we should proceed or retry later? For now, log and continue.
 	}
 
 	//Set as not in_use
@@ -332,7 +439,7 @@ func CompleteReservation(printerId, reservationId int) {
 		printerId,
 	)
 	if err != nil {
-		log.Printf("failed to update printer: %v", err)
+		log.Printf("failed to update printer %d status to not in use: %v", printerId, err)
 	}
 	//Set the reservation as inactive
 	_, err = database.DB.Exec(
@@ -340,11 +447,20 @@ func CompleteReservation(printerId, reservationId int) {
 		reservationId,
 	)
 	if err != nil {
-		log.Printf("failed to update reservation: %v", err)
+		log.Printf("failed to update reservation %d status to inactive: %v", reservationId, err)
 	}
 
+	// Remove from the active manager map
 	manager.Mutex.Lock()
-	delete(manager.Reservations, reservationId)
+	// Check if the reservation still exists in the map before deleting
+	if res, ok := manager.Reservations[reservationId]; ok {
+		// Optionally stop the timer if it hasn't fired yet (though it should have)
+		res.Timer.Stop()
+		delete(manager.Reservations, reservationId)
+		log.Printf("Completed and removed reservation %d from active manager.", reservationId)
+	} else {
+		log.Printf("Reservation %d not found in active manager upon completion.", reservationId)
+	}
 	manager.Mutex.Unlock()
 }
 
@@ -356,6 +472,9 @@ func SetPrinterExecutive(id int) error {
 	querySQL := `SELECT is_executive FROM printers WHERE id = ?`
 	err := database.DB.QueryRow(querySQL, id).Scan(&currentExecutiveness)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			return fmt.Errorf("printer with id %d not found", id)
+		}
 		return fmt.Errorf("error getting printer executiveness from db: %v", err)
 	}
 
@@ -367,5 +486,135 @@ func SetPrinterExecutive(id int) error {
 		return fmt.Errorf("error updating printer executiveness: %v", err)
 	}
 
+	log.Printf("Toggled is_executive for printer %d to %v", id, newExecutiveness)
 	return nil
+}
+
+// GetPrintersByRackId returns all printers belonging to a specific rack, ordered by position.
+func GetPrintersByRackId(rackId int) ([]models.Printer, error) {
+	// Query printers for the given rackId, ordered by rack_position
+	query := "SELECT id, name, color, rack, rack_position, in_use, last_reserved_by, is_executive, is_egn_printer FROM printers WHERE rack = ? ORDER BY rack_position ASC"
+
+	rows, err := database.DB.Query(query, rackId)
+	if err != nil {
+		return nil, fmt.Errorf("query error fetching printers for rack %d: %v", rackId, err)
+	}
+	defer rows.Close()
+
+	// Initialize as an empty, non-nil slice
+	printers := []models.Printer{}
+	for rows.Next() {
+		var p models.Printer
+		var lastReservedBy sql.NullString
+		// Scan all fields including rack_position
+		if err := rows.Scan(&p.Id, &p.Name, &p.Color, &p.Rack, &p.Rack_Position, &p.In_Use, &lastReservedBy, &p.Is_Executive, &p.Is_Egn_Printer); err != nil {
+			// Return nil for the slice in case of a scan error, along with the error itself
+			return nil, fmt.Errorf("scan error for rack %d: %v", rackId, err)
+		}
+		if lastReservedBy.Valid {
+			p.Last_Reserved_By = lastReservedBy.String
+		} else {
+			p.Last_Reserved_By = "" // Ensure it's an empty string if NULL
+		}
+		printers = append(printers, p)
+	}
+
+	// Check for errors during row iteration
+	if err = rows.Err(); err != nil {
+		// Return nil for the slice in case of a rows error, along with the error itself
+		return nil, fmt.Errorf("rows error for rack %d: %v", rackId, err)
+	}
+
+	// Return the (potentially empty) slice and a nil error
+	return printers, nil
+}
+
+// DeletePrinter removes a printer by its ID after checking for active reservations.
+// If no active reservations exist, it also deletes associated inactive reservation history.
+func DeletePrinter(id int) (bool, error) {
+	// 1. Check if the printer exists
+	var currentId int
+	err := database.DB.QueryRow("SELECT id FROM printers WHERE id = ?", id).Scan(&currentId)
+	if errors.Is(err, sql.ErrNoRows) {
+		return false, fmt.Errorf("printer with id %d not found", id)
+	} else if err != nil {
+		return false, fmt.Errorf("error checking if printer exists: %v", err)
+	}
+
+	// 2. Check for ACTIVE reservations associated with this printer
+	var activeReservationCount int
+	err = database.DB.QueryRow("SELECT COUNT(*) FROM reservations WHERE printerid = ? AND is_active = TRUE", id).Scan(&activeReservationCount)
+	if err != nil {
+		return false, fmt.Errorf("error checking for active reservations: %v", err)
+	}
+
+	if activeReservationCount > 0 {
+		return false, fmt.Errorf("cannot delete printer %d: it has %d active reservation(s)", id, activeReservationCount)
+	}
+
+	// 3. Start Transaction
+	tx, err := database.DB.Begin()
+	if err != nil {
+		return false, fmt.Errorf("failed to begin transaction: %v", err)
+	}
+	// Use defer with a named error to handle rollback/commit
+	var txErr error
+	defer func() {
+		if txErr != nil {
+			log.Printf("Rolling back transaction due to error: %v", txErr)
+			tx.Rollback()
+		} else {
+			commitErr := tx.Commit()
+			if commitErr != nil {
+				log.Printf("Error committing transaction for DeletePrinter: %v", commitErr)
+				// Ensure txErr reflects the commit failure if it was previously nil
+				if txErr == nil {
+					txErr = commitErr // This won't be returned directly but signals rollback failure if needed
+				}
+			}
+		}
+	}()
+
+	// 4. Delete INACTIVE reservations associated with the printer (within transaction)
+	// Since we already checked for active ones, all remaining reservations for this printer ID must be inactive.
+	_, err = tx.Exec("DELETE FROM reservations WHERE printerid = ?", id)
+	if err != nil {
+		txErr = fmt.Errorf("error deleting reservation history for printer %d: %v", id, err)
+		return false, txErr
+	}
+	log.Printf("Deleted reservation history for printer %d", id)
+
+	// 5. Attempt to delete the printer (within transaction)
+	result, err := tx.Exec("DELETE FROM printers WHERE id = ?", id)
+	if err != nil {
+		// Check if the error is a foreign key constraint violation (shouldn't happen now, but good practice)
+		var sqliteErr sqlite3.Error
+		if errors.As(err, &sqliteErr) {
+			if sqliteErr.Code == sqlite3.ErrConstraint && strings.Contains(sqliteErr.Error(), "FOREIGN KEY constraint failed") {
+				txErr = fmt.Errorf("unexpected foreign key constraint when deleting printer %d after deleting reservations: %v", id, err)
+				return false, txErr
+			}
+		}
+		// Otherwise, it's some other database error
+		txErr = fmt.Errorf("error deleting printer %d: %v", id, err)
+		return false, txErr
+	}
+
+	// 6. Verify deletion
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		// Log this error but don't necessarily fail the operation if deletion likely succeeded
+		log.Printf("Warning: could not verify rows affected after deleting printer %d: %v", id, err)
+		// Don't set txErr here, as the delete likely worked.
+	}
+
+	if rowsAffected == 0 {
+		// This shouldn't happen if the initial check passed, but good to double-check
+		txErr = fmt.Errorf("failed to delete printer %d (rows affected: 0), it might have been deleted concurrently", id)
+		return false, txErr
+	}
+
+	// If we reach here, txErr is nil, and the defer will commit.
+	log.Printf("Successfully deleted printer %d and its reservation history", id)
+	return true, nil
 }
