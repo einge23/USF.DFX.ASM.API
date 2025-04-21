@@ -35,12 +35,11 @@ func loadSecretKey() []byte {
 }
 
 // create a token pair based on the user id and admin status
-func GenerateTokenPair(userId int, isAdmin bool, isEgnLab bool) (*TokenPair, error) {
+func GenerateTokenPair(userId int, isAdmin bool) (*TokenPair, error) {
 	accessToken := jwt.New(jwt.SigningMethodHS256)
 	accessClaims := accessToken.Claims.(jwt.MapClaims)
 	accessClaims["userId"] = userId
 	accessClaims["isAdmin"] = isAdmin
-	accessClaims["isEgnLab"] = isEgnLab
 	accessClaims["exp"] = time.Now().Add(15 * time.Minute).Unix() //expires after 15 minutes
 	accessClaims["type"] = "access"
 
@@ -48,7 +47,6 @@ func GenerateTokenPair(userId int, isAdmin bool, isEgnLab bool) (*TokenPair, err
 	refreshClaims := refreshToken.Claims.(jwt.MapClaims)
 	refreshClaims["userId"] = userId
 	refreshClaims["isAdmin"] = isAdmin
-	refreshClaims["isEgnLab"] = isEgnLab
 	refreshClaims["exp"] = time.Now().Add(7 * 24 * time.Hour).Unix() //expires after one week
 	refreshClaims["type"] = "refresh"
 
@@ -113,11 +111,9 @@ func RefreshAccessToken(refreshToken string) (string, error) {
 	// Extract userId from claims
 
 	// Query the database to get latest user data
-	var isAdmin, isEgnLab bool
-	err = database.DB.QueryRow("SELECT admin, is_egn_lab FROM users WHERE id = ?", userId).Scan(
-		&isAdmin,
-		&isEgnLab,
-	)
+	var isAdmin bool
+	err = database.DB.QueryRow("SELECT admin FROM users WHERE id = ?", userId).Scan(
+		&isAdmin)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return "", errors.New("user no longer exists")
@@ -129,7 +125,6 @@ func RefreshAccessToken(refreshToken string) (string, error) {
 	newClaims := newToken.Claims.(jwt.MapClaims)
 	newClaims["userId"] = userId
 	newClaims["isAdmin"] = isAdmin
-	newClaims["isEgnLab"] = isEgnLab
 	newClaims["exp"] = time.Now().Add(15 * time.Minute).Unix()
 	newClaims["type"] = "access"
 

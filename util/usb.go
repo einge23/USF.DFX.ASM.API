@@ -1,4 +1,3 @@
-// util/usb.go
 package util
 
 import (

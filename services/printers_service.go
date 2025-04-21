@@ -14,13 +14,13 @@ import (
 	"github.com/mattn/go-sqlite3" // Import the sqlite3 driver
 )
 
-// return all printers by rack for specific system (EGN or General), as serialized JSON
-func GetPrinters(isEgnLab bool) ([]models.Printer, error) {
-	// Build query based on isEgnLab parameter, include rack_position
-	query := "SELECT id, name, color, rack, rack_position, in_use, last_reserved_by, is_executive, is_egn_printer FROM printers WHERE is_egn_printer = ? order by rack asc, rack_position asc"
+// return all printers by rack as serialized JSON
+func GetPrinters() ([]models.Printer, error) {
+	// Build query
+	query := "SELECT id, name, color, rack, rack_position, in_use, last_reserved_by, is_executive, FROM printers order by rack asc, rack_position asc"
 
 	// Execute query with appropriate parameter
-	rows, err := database.DB.Query(query, isEgnLab)
+	rows, err := database.DB.Query(query)
 	if err != nil {
 		return nil, fmt.Errorf("query error: %v", err)
 	}
@@ -31,7 +31,7 @@ func GetPrinters(isEgnLab bool) ([]models.Printer, error) {
 		var p models.Printer
 		var lastReservedBy sql.NullString
 		// Scan rack_position
-		if err := rows.Scan(&p.Id, &p.Name, &p.Color, &p.Rack, &p.Rack_Position, &p.In_Use, &lastReservedBy, &p.Is_Executive, &p.Is_Egn_Printer); err != nil {
+		if err := rows.Scan(&p.Id, &p.Name, &p.Color, &p.Rack, &p.Rack_Position, &p.In_Use, &lastReservedBy, &p.Is_Executive); err != nil {
 			return nil, fmt.Errorf("scan error: %v", err)
 		}
 		if lastReservedBy.Valid {
@@ -123,7 +123,7 @@ func AddPrinter(request models.Printer) (bool, error) {
 	}
 
 	// Insert the new printer with the calculated rack_position
-	insertSQL := `INSERT INTO printers (id, name, color, rack, rack_position, in_use, last_reserved_by, is_executive, is_egn_printer) values (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	insertSQL := `INSERT INTO printers (id, name, color, rack, rack_position, in_use, last_reserved_by, is_executive) values (?, ?, ?, ?, ?, ?, ?, ?)`
 	_, err = tx.Exec(insertSQL,
 		request.Id,
 		request.Name,
@@ -132,8 +132,7 @@ func AddPrinter(request models.Printer) (bool, error) {
 		newRackPosition, // Use calculated position
 		false,           // New printers are not in use
 		nil,             // No one has reserved it yet
-		request.Is_Executive,
-		request.Is_Egn_Printer)
+		request.Is_Executive)
 	if err != nil {
 		txErr = fmt.Errorf("error inserting new printer to DB: %v", err)
 		return false, txErr
@@ -149,7 +148,6 @@ type UpdatePrinterRequest struct {
 	Rack         int    `json:"rack"`
 	RackPosition int    `json:"rack_position"` // Added rack position
 	IsExecutive  bool   `json:"is_executive"`
-	IsEgnPrinter bool   `json:"is_egn_printer"`
 }
 
 // given printer id and attributes, update the printer.
@@ -186,14 +184,13 @@ func UpdatePrinter(id int, request UpdatePrinterRequest) (bool, error) {
 	// No conflict found, or the only printer at the target location is the one being updated (which is fine if rack/pos aren't changing)
 
 	// Proceed with the update
-	updateSQL := `UPDATE printers SET name = ?, color = ?, rack = ?, rack_position = ?, is_executive = ?, is_egn_printer = ? WHERE id = ?`
+	updateSQL := `UPDATE printers SET name = ?, color = ?, rack = ?, rack_position = ?, is_executive = ? WHERE id = ?`
 	_, err = database.DB.Exec(updateSQL,
 		request.Name,
 		request.Color,
 		request.Rack,
 		request.RackPosition, // Include rack position in update
 		request.IsExecutive,
-		request.IsEgnPrinter,
 		id)
 	if err != nil {
 		return false, fmt.Errorf("error updating printer in DB: %v", err)
@@ -226,7 +223,7 @@ func ReservePrinter(printerId int, userId int, timeMins int) (bool, error) {
 	var printer models.Printer
 	var lastReservedBy sql.NullString
 	// Include rack_position in the select query
-	if err := database.DB.QueryRow("SELECT id, name, color, rack, rack_position, in_use, last_reserved_by, is_executive, is_egn_printer FROM printers WHERE id = ?", printerId).Scan(
+	if err := database.DB.QueryRow("SELECT id, name, color, rack, rack_position, in_use, last_reserved_by, is_executive, FROM printers WHERE id = ?", printerId).Scan(
 		&printer.Id,
 		&printer.Name,
 		&printer.Color,
@@ -234,8 +231,7 @@ func ReservePrinter(printerId int, userId int, timeMins int) (bool, error) {
 		&printer.Rack_Position, // Scan rack_position
 		&printer.In_Use,
 		&lastReservedBy,
-		&printer.Is_Executive,
-		&printer.Is_Egn_Printer); err != nil {
+		&printer.Is_Executive); err != nil {
 		// Check if it's specifically a "no rows" error
 		if err == sql.ErrNoRows {
 			return false, fmt.Errorf("printer with id %d not found", printerId)
@@ -307,13 +303,12 @@ func ReservePrinter(printerId int, userId int, timeMins int) (bool, error) {
 
 	// Create reservation and add it to reservations table as an entry (within transaction)
 	result, err = tx.Exec(
-		"INSERT INTO reservations (printerid, userid, time_reserved, time_complete, is_active, is_egn_reservation) values (?, ?, ?, ?, ?, ?)",
+		"INSERT INTO reservations (printerid, userid, time_reserved, time_complete, is_active) values (?, ?, ?, ?, ?)",
 		printerId,
 		userId,
 		time_reserved,
 		time_complete,
-		true,
-		printer.Is_Egn_Printer)
+		true)
 	if err != nil {
 		txErr = err
 		return false, fmt.Errorf("failed to insert reservation: %v", err)
@@ -371,7 +366,6 @@ func ReservePrinter(printerId int, userId int, timeMins int) (bool, error) {
 		Time_Reserved:      time_reserved,
 		Time_Complete:      time_complete,
 		Is_Active:          true,
-		Is_Egn_Reservation: printer.Is_Egn_Printer,
 		Timer:              timer,
 	}
 	manager.Mutex.Unlock()
@@ -493,7 +487,7 @@ func SetPrinterExecutive(id int) error {
 // GetPrintersByRackId returns all printers belonging to a specific rack, ordered by position.
 func GetPrintersByRackId(rackId int) ([]models.Printer, error) {
 	// Query printers for the given rackId, ordered by rack_position
-	query := "SELECT id, name, color, rack, rack_position, in_use, last_reserved_by, is_executive, is_egn_printer FROM printers WHERE rack = ? ORDER BY rack_position ASC"
+	query := "SELECT id, name, color, rack, rack_position, in_use, last_reserved_by, is_executive FROM printers WHERE rack = ? ORDER BY rack_position ASC"
 
 	rows, err := database.DB.Query(query, rackId)
 	if err != nil {
@@ -507,7 +501,7 @@ func GetPrintersByRackId(rackId int) ([]models.Printer, error) {
 		var p models.Printer
 		var lastReservedBy sql.NullString
 		// Scan all fields including rack_position
-		if err := rows.Scan(&p.Id, &p.Name, &p.Color, &p.Rack, &p.Rack_Position, &p.In_Use, &lastReservedBy, &p.Is_Executive, &p.Is_Egn_Printer); err != nil {
+		if err := rows.Scan(&p.Id, &p.Name, &p.Color, &p.Rack, &p.Rack_Position, &p.In_Use, &lastReservedBy, &p.Is_Executive); err != nil {
 			// Return nil for the slice in case of a scan error, along with the error itself
 			return nil, fmt.Errorf("scan error for rack %d: %v", rackId, err)
 		}

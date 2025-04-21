@@ -12,7 +12,6 @@ type Reservation struct {
 	Time_Reserved time.Time `json:"time_reserved"`
 	Time_Complete time.Time `json:"time_complete"`
 	Is_Active bool `json:"is_active"`
-	Is_Egn_Reservation bool `json:"is_egn_reservation"`
 	Timer *time.Timer
 }
 
@@ -28,5 +27,4 @@ type ReservationDTO struct {
 	Time_Reserved time.Time `json:"time_reserved"`
 	Time_Complete time.Time `json:"time_complete"`
 	Is_Active bool `json:"is_active"`
-	Is_Egn_Reservation bool `json:"is_egn_reservation"`
 }
