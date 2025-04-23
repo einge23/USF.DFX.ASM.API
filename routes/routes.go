@@ -47,6 +47,7 @@ func SetupRouter(r *gin.Engine) {
 			reservations := protected.Group("/reservations") //user-level reservations routes
 			{
 				reservations.GET("/getActiveReservations", controllers.GetActiveReservations)
+				reservations.PUT("/cancel", controllers.CancelActiveReservation)
 			}
 
 			//Admin routes

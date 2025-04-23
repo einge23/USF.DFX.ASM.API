@@ -75,7 +75,16 @@ func SetUserTrained(userId int) error {
 //given a userId, return all reservation info of that user. Returns both active and inactive reservations.
 func GetUserReservations(userId int) ([]models.ReservationDTO, error) {
 	var reservations []models.ReservationDTO
-	querySQL := `SELECT id, userId, time_reserved, time_complete, printerid, is_active, is_egn_reservation FROM reservations WHERE userId = ? ORDER BY time_reserved DESC`
+	querySQL := `
+		SELECT 
+			r.id, r.userId, u.username, r.time_reserved, r.time_complete, 
+			r.printerid, p.name AS printer_name, r.is_active, r.is_egn_reservation 
+		FROM reservations r
+		JOIN users u ON r.userId = u.id
+		JOIN printers p ON r.printerid = p.id
+		WHERE r.userId = ? 
+		ORDER BY r.time_reserved DESC
+	`
 	rows, err := database.DB.Query(querySQL, userId)
 	if err != nil {
 		return nil, fmt.Errorf("error getting reservations from db: %v", err)
@@ -85,7 +94,11 @@ func GetUserReservations(userId int) ([]models.ReservationDTO, error) {
 	for rows.Next() { //for all returns rows
 		var reservation models.ReservationDTO //create a reservation object
 		//scan in all reservation info
-		err := rows.Scan(&reservation.Id, &reservation.UserId, &reservation.Time_Reserved, &reservation.Time_Complete, &reservation.PrinterId, &reservation.Is_Active, &reservation.Is_Egn_Reservation)
+		err := rows.Scan(
+			&reservation.Id, &reservation.UserId, &reservation.Username, &reservation.Time_Reserved,
+			&reservation.Time_Complete, &reservation.PrinterId, &reservation.PrinterName,
+			&reservation.Is_Active, &reservation.Is_Egn_Reservation,
+		)
 		if err != nil {
 			return nil, fmt.Errorf("error scanning reservation: %v", err)
 		}
@@ -99,7 +112,16 @@ func GetUserReservations(userId int) ([]models.ReservationDTO, error) {
 //given a userId, return all reservation info for active reservations of that user
 func GetActiveUserReservations(userId int) ([]models.ReservationDTO, error) {
 	var reservations []models.ReservationDTO
-	querySQL := `SELECT id, userId, time_reserved, time_complete, printerid, is_active, is_egn_reservation FROM reservations WHERE userId = ? AND is_active = 1 ORDER BY time_reserved DESC`
+	querySQL := `
+		SELECT 
+			r.id, r.userId, u.username, r.time_reserved, r.time_complete, 
+			r.printerid, p.name AS printer_name, r.is_active, r.is_egn_reservation 
+		FROM reservations r
+		JOIN users u ON r.userId = u.id
+		JOIN printers p ON r.printerid = p.id
+		WHERE r.userId = ? AND r.is_active = 1 
+		ORDER BY r.time_reserved DESC
+	`
 	rows, err := database.DB.Query(querySQL, userId)
 	if err != nil {
 		return nil, fmt.Errorf("error getting reservations from db: %v", err)
@@ -109,7 +131,11 @@ func GetActiveUserReservations(userId int) ([]models.ReservationDTO, error) {
 	for rows.Next() { //for all returned rows
 		var reservation models.ReservationDTO //create a reservation object
 		//scan in all active reservation info
-		err := rows.Scan(&reservation.Id, &reservation.UserId, &reservation.Time_Reserved, &reservation.Time_Complete, &reservation.PrinterId, &reservation.Is_Active, &reservation.Is_Egn_Reservation)
+		err := rows.Scan(
+			&reservation.Id, &reservation.UserId, &reservation.Username, &reservation.Time_Reserved,
+			&reservation.Time_Complete, &reservation.PrinterId, &reservation.PrinterName,
+			&reservation.Is_Active, &reservation.Is_Egn_Reservation,
+		)
 		if err != nil {
 			return nil, fmt.Errorf("error scanning reservation: %v", err)
 		}
