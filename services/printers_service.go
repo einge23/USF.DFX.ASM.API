@@ -17,7 +17,7 @@ import (
 // return all printers by rack as serialized JSON
 func GetPrinters() ([]models.Printer, error) {
 	// Build query
-	query := "SELECT id, name, color, rack, rack_position, in_use, last_reserved_by, is_executive, FROM printers order by rack asc, rack_position asc"
+	query := "SELECT id, name, color, rack, rack_position, in_use, last_reserved_by, is_executive FROM printers order by rack asc, rack_position asc"
 
 	// Execute query with appropriate parameter
 	rows, err := database.DB.Query(query)
@@ -223,7 +223,7 @@ func ReservePrinter(printerId int, userId int, timeMins int) (bool, error) {
 	var printer models.Printer
 	var lastReservedBy sql.NullString
 	// Include rack_position in the select query
-	if err := database.DB.QueryRow("SELECT id, name, color, rack, rack_position, in_use, last_reserved_by, is_executive, FROM printers WHERE id = ?", printerId).Scan(
+	if err := database.DB.QueryRow("SELECT id, name, color, rack, rack_position, in_use, last_reserved_by, is_executive FROM printers WHERE id = ?", printerId).Scan(
 		&printer.Id,
 		&printer.Name,
 		&printer.Color,

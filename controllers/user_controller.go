@@ -179,3 +179,20 @@ func SetUserBanTime(c *gin.Context) {
 
 	c.JSON(http.StatusOK, true)
 }
+
+//handles the GetUserWeeklyMinutes service. Binds JSON to expected format and returns any errors encountered.
+//requires that the userId is given at the end of the route.
+func GetUserWeeklyMinutes(c *gin.Context) {
+	id := util.GetInfoFromPath(c, "userID")
+	if id == -1 {
+		return
+	}
+
+	minutes, err := services.GetUserWeeklyMinutes(id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, minutes)
+}

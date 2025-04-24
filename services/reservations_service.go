@@ -8,9 +8,19 @@ import (
 	"time"
 )
 
-//returns all active reservations
+//returns all active reservations including printer and user names
 func GetActiveReservations() ([]models.ReservationDTO, error) {
-	rows, err := database.DB.Query("SELECT id, printerId, time_reserved, time_complete, userId, is_active FROM reservations WHERE is_active = 1")
+	query := `
+		SELECT 
+			r.id, r.printerId, p.name AS printer_name, r.userId, u.username, 
+			r.time_reserved, r.time_complete, r.is_active
+		FROM reservations r
+		JOIN printers p ON r.printerId = p.id
+		JOIN users u ON r.userId = u.id
+		WHERE r.is_active = 1
+		ORDER BY r.time_reserved DESC
+	`
+	rows, err := database.DB.Query(query)
 	if err != nil {
 		return nil, fmt.Errorf("query error: %v", err)
 	}
@@ -19,7 +29,10 @@ func GetActiveReservations() ([]models.ReservationDTO, error) {
 	var reservations []models.ReservationDTO
 	for rows.Next() {
 		var r models.ReservationDTO
-		if err := rows.Scan(&r.Id, &r.PrinterId, &r.Time_Reserved, &r.Time_Complete, &r.UserId, &r.Is_Active); err != nil {
+		if err := rows.Scan(
+			&r.Id, &r.PrinterId, &r.PrinterName, &r.UserId, &r.Username,
+			&r.Time_Reserved, &r.Time_Complete, &r.Is_Active,
+		); err != nil {
 			return nil, fmt.Errorf("scan error: %v", err)
 		}
 		reservations = append(reservations, r)

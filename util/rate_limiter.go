@@ -12,7 +12,7 @@ import (
 func GetRateLimiter() gin.HandlerFunc {
 	rate := limiter.Rate{
 		Period: 1 * time.Minute,
-		Limit:  60,
+		Limit:  100,
 	}
 
 	store := memory.NewStore()

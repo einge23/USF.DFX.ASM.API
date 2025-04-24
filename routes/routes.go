@@ -39,6 +39,8 @@ func SetupRouter(r *gin.Engine) {
 				users.PUT("/cancelActiveReservation",
 					controllers.CancelActiveReservation,
 				)
+				users.GET("/weeklyMinutes/:userID",
+					controllers.GetUserWeeklyMinutes,)
 			}
 			settings := protected.Group("/settings") //user-level settings routes
 			{
@@ -47,6 +49,7 @@ func SetupRouter(r *gin.Engine) {
 			reservations := protected.Group("/reservations") //user-level reservations routes
 			{
 				reservations.GET("/getActiveReservations", controllers.GetActiveReservations)
+				reservations.PUT("/cancel", controllers.CancelActiveReservation)
 			}
 
 			//Admin routes
