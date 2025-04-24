@@ -13,7 +13,6 @@ type CreateUserRequest struct {
 	Scanner_Message string `json:"scanner_message"`
 	Trained         bool   `json:"trained"`
 	Admin           bool   `json:"admin"`
-	Egn_Lab         bool `json:"egn_lab"`
 }
 
 //Given a card scanner raw input, trained bool, and admin bool, create a user and add it to user table
@@ -40,8 +39,8 @@ func CreateUser(createUserRequest CreateUserRequest) (bool, error) {
 	}
 
 	//add user
-	insertSQL := `INSERT INTO users (id, username, has_training, admin, is_egn_lab) VALUES (?, ?, ?, ?, ?)`
-	_, err = database.DB.Exec(insertSQL, cardData.Id, cardData.Username, createUserRequest.Trained, createUserRequest.Admin, createUserRequest.Egn_Lab)
+	insertSQL := `INSERT INTO users (id, username, has_training, admin) VALUES (?, ?, ?, ?)`
+	_, err = database.DB.Exec(insertSQL, cardData.Id, cardData.Username, createUserRequest.Trained, createUserRequest.Admin)
 	if err != nil {
 		return false, fmt.Errorf("could not add user: %v", err)
 	}
@@ -78,7 +77,7 @@ func GetUserReservations(userId int) ([]models.ReservationDTO, error) {
 	querySQL := `
 		SELECT 
 			r.id, r.userId, u.username, r.time_reserved, r.time_complete, 
-			r.printerid, p.name AS printer_name, r.is_active, r.is_egn_reservation 
+			r.printerid, p.name AS printer_name, r.is_active
 		FROM reservations r
 		JOIN users u ON r.userId = u.id
 		JOIN printers p ON r.printerid = p.id
@@ -97,7 +96,7 @@ func GetUserReservations(userId int) ([]models.ReservationDTO, error) {
 		err := rows.Scan(
 			&reservation.Id, &reservation.UserId, &reservation.Username, &reservation.Time_Reserved,
 			&reservation.Time_Complete, &reservation.PrinterId, &reservation.PrinterName,
-			&reservation.Is_Active, &reservation.Is_Egn_Reservation,
+			&reservation.Is_Active,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("error scanning reservation: %v", err)
@@ -115,7 +114,7 @@ func GetActiveUserReservations(userId int) ([]models.ReservationDTO, error) {
 	querySQL := `
 		SELECT 
 			r.id, r.userId, u.username, r.time_reserved, r.time_complete, 
-			r.printerid, p.name AS printer_name, r.is_active, r.is_egn_reservation 
+			r.printerid, p.name AS printer_name, r.is_active
 		FROM reservations r
 		JOIN users u ON r.userId = u.id
 		JOIN printers p ON r.printerid = p.id
@@ -134,7 +133,7 @@ func GetActiveUserReservations(userId int) ([]models.ReservationDTO, error) {
 		err := rows.Scan(
 			&reservation.Id, &reservation.UserId, &reservation.Username, &reservation.Time_Reserved,
 			&reservation.Time_Complete, &reservation.PrinterId, &reservation.PrinterName,
-			&reservation.Is_Active, &reservation.Is_Egn_Reservation,
+			&reservation.Is_Active,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("error scanning reservation: %v", err)
@@ -149,8 +148,8 @@ func GetActiveUserReservations(userId int) ([]models.ReservationDTO, error) {
 //given a userId, return a user object with all user data
 func GetUserById(userID int) (*models.UserData, error) {
 	var user models.UserData
-	querySQL := `SELECT id, username, has_training, admin, has_executive_access, is_egn_lab, ban_time_end, weekly_minutes FROM users WHERE id = ?`
-	err := database.DB.QueryRow(querySQL, userID).Scan(&user.Id, &user.Username, &user.Trained, &user.Admin, &user.Has_Executive_Access, &user.Is_Egn_Lab, &user.Ban_Time_End, &user.Weekly_Minutes)
+	querySQL := `SELECT id, username, has_training, admin, has_executive_access, ban_time_end, weekly_minutes FROM users WHERE id = ?`
+	err := database.DB.QueryRow(querySQL, userID).Scan(&user.Id, &user.Username, &user.Trained, &user.Admin, &user.Has_Executive_Access, &user.Ban_Time_End, &user.Weekly_Minutes)
 	if err != nil {
 		return nil, fmt.Errorf("error getting user from db: %v", err)
 	}

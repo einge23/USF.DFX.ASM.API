@@ -13,7 +13,7 @@ func GetActiveReservations() ([]models.ReservationDTO, error) {
 	query := `
 		SELECT 
 			r.id, r.printerId, p.name AS printer_name, r.userId, u.username, 
-			r.time_reserved, r.time_complete, r.is_active, r.is_egn_reservation 
+			r.time_reserved, r.time_complete, r.is_active
 		FROM reservations r
 		JOIN printers p ON r.printerId = p.id
 		JOIN users u ON r.userId = u.id
@@ -31,7 +31,7 @@ func GetActiveReservations() ([]models.ReservationDTO, error) {
 		var r models.ReservationDTO
 		if err := rows.Scan(
 			&r.Id, &r.PrinterId, &r.PrinterName, &r.UserId, &r.Username,
-			&r.Time_Reserved, &r.Time_Complete, &r.Is_Active, &r.Is_Egn_Reservation,
+			&r.Time_Reserved, &r.Time_Complete, &r.Is_Active,
 		); err != nil {
 			return nil, fmt.Errorf("scan error: %v", err)
 		}
