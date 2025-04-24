@@ -243,3 +243,13 @@ func SetUserBanTime(id int, request SetUserBanTimeRequest) error {
 
 	return nil
 }
+
+func GetUserWeeklyMinutes(userId int) (int, error) {
+	var weeklyMinutes int
+	querySQL := `SELECT weekly_minutes FROM users WHERE id = ?`
+	err := database.DB.QueryRow(querySQL, userId).Scan(&weeklyMinutes)
+	if err != nil {
+		return 0, fmt.Errorf("error getting user from db: %v", err)
+	}
+	return weeklyMinutes, nil
+}
