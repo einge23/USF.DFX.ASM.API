@@ -6,7 +6,7 @@ CRON_JOBS=$(cat <<EOF
 0 8 * * 1 echo "---------------- \$(date '+\\%Y-\\%m-\\%d \\%H:\\%M:\\%S') ----------------" >> /home/dfxp/Desktop/AutomatedAccessControl/Repos/USF.DFX.ASM.API/logs/weeklyLog.txt && /home/dfxp/Desktop/AutomatedAccessControl/Repos/USF.DFX.ASM.API/scripts/weekly.sh >> /home/dfxp/Desktop/AutomatedAccessControl/Repos/USF.DFX.ASM.API/logs/weeklyLog.txt 2>&1
 
 # Run on reboot
-@reboot echo "---------------- \$(date '+\\%Y-\\%m-\\%d \\%H:\\%M:\\%S') ----------------" >> /home/dfxp/Desktop/AutomatedAccessControl/cronLogs/weeklyLog.txt && /home/dfxp/Desktop/AutomatedAccessControl/Repos/USF.DFX.ASM.API/scripts/weekly.sh >> /home/dfxp/Desktop/AutomatedAccessControl/cronLogs/weeklyLog.txt 2>&1
+@reboot echo "---------------- \$(date '+\\%Y-\\%m-\\%d \\%H:\\%M:\\%S') ----------------" >> /home/dfxp/Desktop/AutomatedAccessControl/Repos/USF.DFX.ASM.API/logs/weeklyLog.txt && /home/dfxp/Desktop/AutomatedAccessControl/Repos/USF.DFX.ASM.API/scripts/weekly.sh >> /home/dfxp/Desktop/AutomatedAccessControl/Repos/USF.DFX.ASM.API/logs/weeklyLog.txt 2>&1
 EOF
 )
 
