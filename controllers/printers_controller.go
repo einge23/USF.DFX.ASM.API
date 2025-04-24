@@ -14,15 +14,8 @@ import (
 
 // handles the GetPrinters service. Binds JSON to expected format and returns any errors encountered.
 func GetPrinters(c *gin.Context) {
-	_, exists := c.Get("isEgnLab")
-	if !exists {
-		log.Printf("Error: No claims found in request context")
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Authentication required"})
-		return
-	}
-	isEgnLab := c.GetBool("isEgnLab")
 
-	printers, err := services.GetPrinters(isEgnLab)
+	printers, err := services.GetPrinters()
 	if err != nil {
 		log.Printf("Error in GetPrinters Service: %v", err)
 		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
