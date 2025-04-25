@@ -261,6 +261,14 @@ func ReservePrinter(printerId int, userId int, timeMins int) (bool, error) {
 		return false, fmt.Errorf("maximum of active reservations per user allowed is %d", limit)
 	}
 
+	var currentWeeklyMinutes int
+	if err := database.DB.QueryRow("SELECT weekly_minutes FROM users WHERE id = ?", userId).Scan(&currentWeeklyMinutes); err != nil {
+		return false, fmt.Errorf("error getting user weekly minutes: %v", err)
+	}
+	if timeMins > currentWeeklyMinutes {
+		return false, fmt.Errorf("requested reservation length %d exceeds remaining weekly minutes %d", timeMins, currentWeeklyMinutes)
+	}
+
 	// Start transaction
 	tx, err := database.DB.Begin()
 	if err != nil {
@@ -318,14 +326,6 @@ func ReservePrinter(printerId int, userId int, timeMins int) (bool, error) {
 	if err != nil {
 		txErr = err
 		return false, fmt.Errorf("failed to get reservation id: %v", err)
-	}
-
-	// Get user's weeklyMinutes (within transaction)
-	var currentWeeklyMinutes int
-	err = tx.QueryRow("SELECT weekly_minutes FROM users WHERE id = ?", userId).Scan(&currentWeeklyMinutes)
-	if err != nil {
-		txErr = err
-		return false, fmt.Errorf("error getting user weekly minutes from db: %v", err)
 	}
 
 	// Subtract reservation's duration from weeklyMinutes (within transaction)
