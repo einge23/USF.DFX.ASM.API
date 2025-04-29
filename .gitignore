@@ -1,2 +1,2 @@
 .env
-.logs/weeklyLog.txt
+/logs/weeklyLog.txt
